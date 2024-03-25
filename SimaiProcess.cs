@@ -404,6 +404,12 @@ internal class SimaiTimingPoint
     {
         var simaiNote = new SimaiNote();
 
+        if (noteText.Contains("&"))
+        {
+            simaiNote.isFake = true;
+            noteText = noteText.Replace("&", "");
+        }
+
         if (isTouchNote(noteText))
         {
             simaiNote.touchArea = noteText[0];
@@ -435,6 +441,7 @@ internal class SimaiTimingPoint
                     simaiNote.holdTime = 0;
                 else
                     simaiNote.holdTime = getTimeFromBeats(noteText);
+
                 //Console.WriteLine("Hold:" + simaiNote.startPosition + " TimeLastFor:" + simaiNote.holdTime);
             }
         }
@@ -493,6 +500,7 @@ internal class SimaiTimingPoint
             {
                 // 除此之外的Break就无所谓了
                 simaiNote.isBreak = true;
+                
             }
 
             noteText = noteText.Replace("b", "");
@@ -655,6 +663,7 @@ internal class SimaiNote
     public bool isBreak;
     public bool isEx;
     public bool isFakeRotate;
+    public bool isFake = false;
     public bool isForceStar;
     public bool isHanabi;
     public bool isSlideBreak;
