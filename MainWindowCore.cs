@@ -984,164 +984,9 @@ public partial class MainWindow : Window
         return localizedString ?? key;
     }
 
-    private async Task TogglePlay(PlayMethod playMethod = PlayMethod.Normal)
-    {
-        if (!Op_Button.IsEnabled) return;
+    
 
-        if (EditorState == EditorControlMethod.Start || playMethod != PlayMethod.Normal)
-            if (!RequestToStop())
-                return;
-
-        FumenContent.Focus();
-        SaveFumen();
-        if (CheckAndStartView()) return;
-        Op_Button.IsEnabled = false;
-        isPlaying = true;
-        isPlan2Stop = false;
-        PlayAndPauseButton.Content = "  ▌▌ ";
-        var CusorTime = SimaiProcessor.Serialize(GetRawFumenText(), GetRawFumenPosition()); //scan first
-
-        //TODO: Moeying改一下你的generateSoundEffect然后把下面这行删了
-        var isOpIncluded = playMethod == PlayMethod.Normal ? false : true;
-
-        var startAt = DateTime.Now;
-        switch (playMethod)
-        {
-            case PlayMethod.Record:
-                Bass.BASS_ChannelSetPosition(bgmStream, 0);
-                startAt = DateTime.Now.AddSeconds(5d);
-                //TODO: i18n
-                MessageBox.Show(GetLocalizedString("AskRender"), GetLocalizedString("Attention"));
-                InternalSwitchWindow(false);
-                await GenerateSoundEffectList(0.0, isOpIncluded);
-                var task = new Task(() => RenderSoundEffect(5d));
-                try
-                {
-                    task.Start();
-                    task.Wait();
-                }
-                catch (AggregateException)
-                {
-                    MessageBox.Show(task.Exception!.InnerException!.Message + "\n" +
-                                    task.Exception.InnerException.StackTrace);
-                    return;
-                }
-
-                if (!await RequestToRun(startAt, playMethod)) return;
-                break;
-            case PlayMethod.Op:
-                await GenerateSoundEffectList(0.0, isOpIncluded);
-                InternalSwitchWindow(false);
-                Bass.BASS_ChannelSetPosition(bgmStream, 0);
-                startAt = DateTime.Now.AddSeconds(5d);
-                Bass.BASS_ChannelPlay(trackStartStream, true);
-
-                if (!await RequestToRun(startAt, playMethod)) return;
-                while (DateTime.Now.Ticks < startAt.Ticks)
-                    if (EditorState != EditorControlMethod.Start)
-                        return;
-                Dispatcher.Invoke(() =>
-                {
-                    playStartTime =
-                        Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream));
-                    SimaiProcessor.ClearNoteListPlayedState();
-                    StartSELoop();
-                    //soundEffectTimer.Start();
-                    waveStopMonitorTimer.Start();
-                    visualEffectRefreshTimer.Start();
-                    Bass.BASS_ChannelPlay(bgmStream, false);
-                });
-                break;
-            case PlayMethod.Normal:
-                playStartTime = Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream));
-                await GenerateSoundEffectList(playStartTime, isOpIncluded);
-                SimaiProcessor.ClearNoteListPlayedState();
-                StartSELoop();
-                //soundEffectTimer.Start();
-                waveStopMonitorTimer.Start();
-                visualEffectRefreshTimer.Start();
-                startAt = DateTime.Now;
-                Bass.BASS_ChannelPlay(bgmStream, false);
-                if (EditorState == EditorControlMethod.Pause)
-                {
-                    if (!RequestToContinue(startAt)) return;
-                }
-                else
-                {
-                    if (!await RequestToRun(startAt, playMethod)) return;
-                }
-                break;
-        }
-
-        ghostCusorPositionTime = (float)CusorTime;
-        DrawWave();
-    }
-
-    private void TogglePause()
-    {
-        Op_Button.IsEnabled = true;
-        isPlaying = false;
-        isPlan2Stop = false;
-
-        FumenContent.Focus();
-        PlayAndPauseButton.Content = "▶";
-        Bass.BASS_ChannelStop(bgmStream);
-        Bass.BASS_ChannelStop(holdRiserStream);
-        //soundEffectTimer.Stop();
-        waveStopMonitorTimer.Stop();
-        visualEffectRefreshTimer.Stop();
-        RequestToPause();
-        DrawWave();
-    }
-
-    private void ToggleStop()
-    {
-        Op_Button.IsEnabled = true;
-        isPlaying = false;
-        isPlan2Stop = false;
-
-        FumenContent.Focus();
-        PlayAndPauseButton.Content = "▶";
-        Bass.BASS_ChannelStop(bgmStream);
-        Bass.BASS_ChannelStop(holdRiserStream);
-        //soundEffectTimer.Stop();
-        waveStopMonitorTimer.Stop();
-        visualEffectRefreshTimer.Stop();
-        RequestToStop();
-        Bass.BASS_ChannelSetPosition(bgmStream, playStartTime);
-        DrawWave();
-    }
-
-    private async Task TogglePlayAndPause(PlayMethod playMethod = PlayMethod.Normal)
-    {
-        if (isPlaying)
-            TogglePause();
-        else
-        {
-            if (EditorState != EditorControlMethod.Pause && 
-                editorSetting!.SyntaxCheckLevel == 2 && 
-                SyntaxChecker.GetErrorCount() != 0)
-            {
-                ShowErrorWindow();
-                return;
-            }
-            await TogglePlay(playMethod);
-        }
-            
-    }
-
-    private void TogglePlayAndStop(PlayMethod playMethod = PlayMethod.Normal)
-    {
-        if (editorSetting!.SyntaxCheckLevel == 2 && SyntaxChecker.GetErrorCount() != 0)
-        {
-            ShowErrorWindow();
-            return;
-        }
-        if (isPlaying)
-            ToggleStop();
-        else
-            TogglePlay(playMethod);
-    }
+    
 
     private void SetPlaybackSpeed(float speed)
     {
@@ -1163,159 +1008,8 @@ public partial class MainWindow : Window
     }
 
 
-    //*VIEW COMMUNICATION
-    private bool RequestToStop()
-    {
-        var req = new EditRequest
-        {
-            Control = EditorControlMethod.Stop
-        };
-        var response = WebControl.RequestPost("http://localhost:8013/", req);
-        if (!response.IsSuccess)
-        {
-            MessageBox.Show(GetLocalizedString("PortClear"));
-            return false;
-        }
-
-        EditorState = EditorControlMethod.Stop;
-        return true;
-    }
-
-    private bool RequestToPause()
-    {
-        var req = new EditRequest
-        {
-            Control = EditorControlMethod.Pause
-        };
-        var response = WebControl.RequestPost("http://localhost:8013/", req);
-        if (!response.IsSuccess)
-        {
-            MessageBox.Show(GetLocalizedString("PortClear"));
-            return false;
-        }
-
-        EditorState = EditorControlMethod.Pause;
-        return true;
-    }
-
-    private bool RequestToContinue(DateTime StartAt)
-    {
-        var req = new EditRequest
-        {
-            Control = EditorControlMethod.Continue,
-            StartAt = StartAt.Ticks,
-            StartTime = (float)Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream)),
-            AudioSpeed = GetPlaybackSpeed(),
-            EditorPlayMethod = editorSetting!.editorPlayMethod
-        };
-        var response = WebControl.RequestPost("http://localhost:8013/", req);
-        if (!response.IsSuccess)
-        {
-            MessageBox.Show(GetLocalizedString("PortClear"));
-            return false;
-        }
-
-        EditorState = EditorControlMethod.Start;
-        return true;
-    }
-
-    private async Task<bool> RequestToRun(DateTime StartAt, PlayMethod playMethod)
-    {
-        var path = Path.Combine(MaidataDir, "majdata.json");
-        float startTime = 0;
-
-        await MajsonGenerator.Generate(path,selectedDifficulty);
-
-        EditorControlMethod control = playMethod switch
-        {
-            PlayMethod.Op => EditorControlMethod.OpStart,
-            PlayMethod.Normal => EditorControlMethod.Start,
-            _ => EditorControlMethod.Record
-        };
-
-        Dispatcher.Invoke(() =>
-        {
-            startTime = (float)Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream));
-            // request.playSpeed = float.Parse(ViewerSpeed.Text);
-            // 将maimaiDX速度换算为View中的单位速度 MajSpeed = 107.25 / (71.4184491 * (MaiSpeed + 0.9975) ^ -0.985558604)
-        });
-
-        var req = new EditRequest()
-        {
-            Control = control,
-            JsonPath = path,
-            StartAt = StartAt.Ticks,
-            StartTime = startTime,
-            NoteSpeed = editorSetting!.playSpeed,
-            TouchSpeed = editorSetting!.touchSpeed,
-            BackgroundCover = editorSetting!.backgroundCover,
-            ComboStatusType = editorSetting!.comboStatusType,
-            AudioSpeed = GetPlaybackSpeed(),
-            SmoothSlideAnime = editorSetting!.SmoothSlideAnime,
-            EditorPlayMethod = editorSetting.editorPlayMethod
-        };
-
-        var response = WebControl.RequestPost("http://localhost:8013/", req);
-        if (!response.IsSuccess)
-        {
-            MessageBox.Show(GetLocalizedString("PortClear"));
-            return false;
-        }
-
-        EditorState = EditorControlMethod.Start;
-        return true;
-    }
-
     
-
-    private bool CheckAndStartView()
-    {
-        var path = "MajdataView.exe";
-        if (Process.GetProcessesByName("MajdataView").Length == 0 && Process.GetProcessesByName("Unity").Length == 0)
-        {
-            if (!File.Exists(path))
-                return true;
-            var viewProcess = Process.Start(path);
-            var setWindowPosTimer = new Timer(2000)
-            {
-                AutoReset = false
-            };
-            setWindowPosTimer.Elapsed += SetWindowPosTimer_Elapsed;
-            setWindowPosTimer.Start();
-            return true;
-        }
-
-        return false;
-    }
-
-    private string GetViewerWorkingDirectory()
-    {
-        return Environment.CurrentDirectory + "/MajdataView_Data/StreamingAssets";
-        /*string tempPath = "";
-        Process baseProc;
-        Process[] viewProcs;
-        viewProcs = Process.GetProcessesByName("MajdataView");
-        // Prioritize Majdata First
-        if (viewProcs.Length > 0)
-        {
-            baseProc = viewProcs.First();
-            string pwd;
-            pwd = baseProc.StartInfo.WorkingDirectory.TrimEnd('/');
-            if (pwd.Length == 0) pwd = ".";
-            tempPath = pwd + "/MajdataView_Data/StreamingAssets";
-        }
-        else
-        {
-            viewProcs = Process.GetProcessesByName("Unity");
-        }
-        if (viewProcs.Length <= 0)
-            throw new Exception("Unable to find MajdataView instance!");
-
-        return (tempPath.Length == 0) ?
-            Environment.CurrentDirectory + "/SFX" :
-            tempPath;*/
-    }
-
+    
     private void InternalSwitchWindow(bool moveToPlace = true)
     {
         var windowPtr = FindWindow(null, "MajdataView");
@@ -1325,7 +1019,6 @@ public partial class MainWindow : Window
         //SwitchToThisWindow(thisWindow, true);
         if (moveToPlace) InternalMoveWindow();
     }
-
     private void InternalMoveWindow()
     {
         var windowPtr = FindWindow(null, "MajdataView");
@@ -1351,7 +1044,9 @@ public partial class MainWindow : Window
             (int)Height - 20,
             (int)Height, true);
     }
-
+    /// <summary>
+    /// 窗口位置设置
+    /// </summary>
     private void SetWindowGoldenPosition()
     {
         // 属于你的独享黄金位置
@@ -1361,7 +1056,9 @@ public partial class MainWindow : Window
         Left = (ScreenWidth - Width + Height) / 2 - 10;
         Top = (ScreenHeight - Height) / 2;
     }
-
+    /// <summary>
+    /// 富文本控件输入模式切换
+    /// </summary>
     private void SwitchFumenOverwriteMode()
     {
         fumenOverwriteMode = !fumenOverwriteMode;
@@ -1380,7 +1077,11 @@ public partial class MainWindow : Window
         //修改提示弹窗可见性
         OverrideModeTipsPopup.Visibility = fumenOverwriteMode ? Visibility.Visible : Visibility.Collapsed;
     }
-
+    /// <summary>
+    /// Majdata检查更新
+    /// </summary>
+    /// <param name="onStart"></param>
+    /// <returns></returns>
     private async Task CheckUpdate(bool onStart = false)
     {
         if (UpdateCheckLock) return;
@@ -1442,12 +1143,17 @@ public partial class MainWindow : Window
             return result;
         }
 
-        void requestHandler(string response)
-        {
-            UpdateCheckLock = false;
+        #endregion
 
-            var resJson = JsonConvert.DeserializeObject<JObject>(response)!;
-            var latestVersionString = resJson["tag_name"]!.ToString();
+        // 检查是否需要更新软件
+
+        try
+        {
+            var rsp =  await WebControl.RequestGETAsync("http://api.github.com/repos/LingFeng-bbben/MajdataView/releases/latest");
+
+            UpdateCheckLock = false;
+            var resJson = Serializer.Json.Deserialize<Dictionary<string, object>>(rsp)!;
+            var latestVersionString = resJson["tag_name"]!.ToString() ?? string.Empty;
             var releaseUrl = resJson["html_url"]!.ToString();
 
             var latestVersion = oldVersionCompatible(latestVersionString);
@@ -1481,27 +1187,22 @@ public partial class MainWindow : Window
                 // 没有新版本，可以不用更新
                 if (!onStart) MessageBox.Show(GetLocalizedString("NoNewVersion"), GetLocalizedString("CheckUpdate"));
             }
-        }
-
-        #endregion
-
-        // 检查是否需要更新软件
-
-        try
+        } 
+        catch (Exception e)
         {
-            requestHandler(
-                await WebControl.RequestGETAsync("http://api.github.com/repos/LingFeng-bbben/MajdataView/releases/latest"));
-        } catch {
             // 网络请求失败
             if (!onStart) MessageBox.Show(GetLocalizedString("RequestFail"), GetLocalizedString("CheckUpdate"));
         }
     }
-
-    public string GetWindowsTitleString()
-    {
-        return $"MajdataEdit ({MAJDATA_VERSION_STRING})";
-    }
-
+    /// <summary>
+    /// 获取带版本号的窗体标题
+    /// </summary>
+    /// <returns></returns>
+    public string GetWindowsTitleString() => $"MajdataEdit ({MAJDATA_VERSION_STRING})";
+    /// <summary>
+    /// 获取带版本号的窗体标题
+    /// </summary>
+    /// <returns></returns>
     public string GetWindowsTitleString(string info)
     {
         try

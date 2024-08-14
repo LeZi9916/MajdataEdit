@@ -4,9 +4,8 @@ using System.IO;
 using System.Net.Http;
 using System.Reflection;
 using System.Text;
-using System.Text.Json;
 
-namespace MajdataEdit;
+namespace MajdataEdit.Utils;
 
 internal static class WebControl
 {
@@ -31,12 +30,12 @@ internal static class WebControl
             return "ERROR";
         }
     }
-    public static ViewResponse RequestPost<T>(string url,in T req) where T : IEditRequest
+    public static ViewResponse RequestPost<T>(string url, in T req) where T : IEditRequest
     {
         try
         {
             using var client = new HttpClient();
-            var json = JsonSerializer.Serialize(req);
+            var json = Serializer.Json.Serialize(req);
             var webRequest = new HttpRequestMessage(HttpMethod.Post, url)
             {
                 Content = new StringContent(json, Encoding.UTF8)
@@ -48,12 +47,12 @@ internal static class WebControl
             var rsp = new ViewResponse()
             {
                 Code = ResponseCode.OK,
-                Response =  reader.ReadToEnd(),
+                Response = reader.ReadToEnd(),
                 Exception = null
             };
             return rsp;
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             return new ViewResponse()
             {
@@ -68,16 +67,8 @@ internal static class WebControl
         try
         {
             using var client = new HttpClient();
-            string json = string.Empty;
+            string json = await Serializer.Json.SerializeAsync(req);
 
-            await using (var memStream = new MemoryStream())
-            {
-                await JsonSerializer.SerializeAsync(memStream,req);
-                memStream.Position = 0;
-                using (var memReader = new StreamReader(memStream))
-                    json = await memReader.ReadToEndAsync();
-            }
-                
             var webRequest = new HttpRequestMessage(HttpMethod.Post, url)
             {
                 Content = new StringContent(json, Encoding.UTF8)
@@ -108,7 +99,7 @@ internal static class WebControl
     public static async Task<string> RequestGETAsync(string url)
     {
         var executingAssembly = Assembly.GetExecutingAssembly();
-        
+
         using var httpClient = new HttpClient();
         var request = new HttpRequestMessage(HttpMethod.Get, url);
         request.Headers.Add("User-Agent", $"{executingAssembly.GetName().Name!} / {executingAssembly.GetName().Version!.ToString(3)}");

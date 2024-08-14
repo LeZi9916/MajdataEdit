@@ -1,11 +1,10 @@
 ﻿using MajdataEdit.Types;
 using System.IO;
-using System.Text.Json;
 
 namespace MajdataEdit.Utils;
 public static class MajsonGenerator
 {
-    public static async Task Generate(string path, int selectedDifficulty)
+    public static async ValueTask Generate(string path, int selectedDifficulty)
     {
         var jsonStruct = new Majson();
         foreach (var note in SimaiProcessor.notelist)
@@ -22,6 +21,6 @@ public static class MajsonGenerator
         jsonStruct.diffNum = selectedDifficulty;
 
         using var stream = File.OpenWrite(path);
-        await JsonSerializer.SerializeAsync(stream, jsonStruct);
+        await Serializer.Json.SerializeAsync(stream, jsonStruct);
     }
 }
