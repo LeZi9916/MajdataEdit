@@ -33,7 +33,11 @@ public partial class MainWindow : Window
     {
         TogglePlayAndStop(PlayMethod.Op);
     }
-
+    /// <summary>
+    /// 加快播放速度
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
     private void IncreasePlaybackSpeed_CanExecute(object? sender, CanExecuteRoutedEventArgs e)
     {
         if (Bass.BASS_ChannelIsActive(bgmStream) == BASSActive.BASS_ACTIVE_PLAYING) return;
@@ -46,7 +50,11 @@ public partial class MainWindow : Window
         playbackSpeedHideTimer.Stop();
         playbackSpeedHideTimer.Start();
     }
-
+    /// <summary>
+    /// 降低播放速度
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
     private void DecreasePlaybackSpeed_CanExecute(object? sender, CanExecuteRoutedEventArgs e)
     {
         if (Bass.BASS_ChannelIsActive(bgmStream) == BASSActive.BASS_ACTIVE_PLAYING) return;

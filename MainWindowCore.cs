@@ -1026,7 +1026,7 @@ public partial class MainWindow : Window
                     return;
                 }
 
-                if (!RequestToRun(startAt, playMethod)) return;
+                if (!await RequestToRun(startAt, playMethod)) return;
                 break;
             case PlayMethod.Op:
                 await GenerateSoundEffectList(0.0, isOpIncluded);
@@ -1035,7 +1035,7 @@ public partial class MainWindow : Window
                 startAt = DateTime.Now.AddSeconds(5d);
                 Bass.BASS_ChannelPlay(trackStartStream, true);
 
-                if (!RequestToRun(startAt, playMethod)) return;
+                if (!await RequestToRun(startAt, playMethod)) return;
                 while (DateTime.Now.Ticks < startAt.Ticks)
                     if (EditorState != EditorControlMethod.Start)
                         return;
@@ -1061,17 +1061,14 @@ public partial class MainWindow : Window
                 visualEffectRefreshTimer.Start();
                 startAt = DateTime.Now;
                 Bass.BASS_ChannelPlay(bgmStream, false);
-                Task.Run(() =>
+                if (EditorState == EditorControlMethod.Pause)
                 {
-                    if (EditorState == EditorControlMethod.Pause)
-                    {
-                        if (!RequestToContinue(startAt)) return;
-                    }
-                    else
-                    {
-                        if (!RequestToRun(startAt, playMethod)) return;
-                    }
-                });
+                    if (!RequestToContinue(startAt)) return;
+                }
+                else
+                {
+                    if (!await RequestToRun(startAt, playMethod)) return;
+                }
                 break;
         }
 
@@ -1221,28 +1218,13 @@ public partial class MainWindow : Window
         return true;
     }
 
-    private bool RequestToRun(DateTime StartAt, PlayMethod playMethod)
+    private async Task<bool> RequestToRun(DateTime StartAt, PlayMethod playMethod)
     {
-        var jsonStruct = new Majson();
-        foreach (var note in SimaiProcess.notelist)
-        {
-            note.noteList = note.getNotes();
-            jsonStruct.timingList.Add(note);
-        }
-
-        jsonStruct.title = SimaiProcess.title!;
-        jsonStruct.artist = SimaiProcess.artist!;
-        jsonStruct.level = SimaiProcess.levels[selectedDifficulty];
-        jsonStruct.designer = SimaiProcess.designer!;
-        jsonStruct.difficulty = SimaiProcess.GetDifficultyText(selectedDifficulty);
-        jsonStruct.diffNum = selectedDifficulty;
-
-        var json = JsonConvert.SerializeObject(jsonStruct);
-        var path = MaidataDir + "/majdata.json";
-        File.WriteAllText(path, json);
-
-        
+        var path = Path.Combine(MaidataDir, "majdata.json");
         float startTime = 0;
+
+        await MajsonGenerator.Generate(path,selectedDifficulty);
+
         EditorControlMethod control = playMethod switch
         {
             PlayMethod.Op => EditorControlMethod.OpStart,
