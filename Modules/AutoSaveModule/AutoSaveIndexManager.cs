@@ -64,7 +64,7 @@ internal class AutoSaveIndexManager : IAutoSaveIndexManager
         {
             FileName = path,
             SavedTime = DateTimeOffset.Now.AddHours(8).ToUnixTimeSeconds(),
-            RawPath = MainWindow.maidataDir
+            RawPath = MainWindow.MaidataDir
         };
         index!.FilesInfo.Add(fileInfo);
 

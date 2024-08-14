@@ -3,7 +3,23 @@ public enum EditorPlayMethod
 {
     Classic, DJAuto, Random, Disabled
 }
+//*PLAY CONTROL
 
+public enum PlayMethod
+{
+    /// <summary>
+    /// 正常回放
+    /// </summary>
+    Normal,
+    /// <summary>
+    /// 录制预览
+    /// </summary>
+    Op,
+    /// <summary>
+    /// 录制视频
+    /// </summary>
+    Record
+}
 public enum EditorComboIndicator
 {
     None,
@@ -24,13 +40,21 @@ public enum EditorComboIndicator
     MAX
 }
 
-internal enum EditorControlMethod
+public enum EditorControlMethod
 {
     Start,
     Stop,
+    /// <summary>
+    /// 录制预览
+    /// </summary>
     OpStart,
     Pause,
     Continue,
     Record
+}
+public enum ResponseCode
+{
+    OK,
+    Error
 }
 

@@ -40,46 +40,46 @@ namespace MajdataEdit;
 
 public partial class MainWindow : Window
 {
-    private const string majSettingFilename = "majSetting.json";
-    private const string editorSettingFilename = "EditorSetting.json";
+    const string majSettingFilename = "majSetting.json";
+    const string editorSettingFilename = "EditorSetting.json";
     public static readonly string MAJDATA_VERSION_STRING = $"v{Assembly.GetExecutingAssembly().GetName().Version!.ToString(3)}";
     public static readonly SemVersion MAJDATA_VERSION = SemVersion.Parse(MAJDATA_VERSION_STRING, SemVersionStyles.Any);
 
-    public static string maidataDir = "";
+    public static string MaidataDir { get; private set; } = "";
 
     //float[] wavedBs;
-    private readonly short[][] waveRaws = new short[3][];
+    readonly short[][] waveRaws = new short[3][];
     public Timer chartChangeTimer = new(1000); // 谱面变更延迟解析]\
-    private readonly Timer currentTimeRefreshTimer = new(100);
+    readonly Timer currentTimeRefreshTimer = new(100);
 
-    public DiscordRpcClient DCRPCclient = new("1068882546932326481");
+    DiscordRpcClient DCRPCclient = new("1068882546932326481");
 
-    private float deltatime = 4f;
+    float deltatime = 4f;
     public EditorSetting? editorSetting;
 
-    private bool fumenOverwriteMode; //谱面文本覆盖模式
-    private float ghostCusorPositionTime;
-    private bool isDrawing;
-    private bool isLoading;
-    private bool isReplaceConformed;
+    bool fumenOverwriteMode; //谱面文本覆盖模式
+    float ghostCusorPositionTime;
+    bool isDrawing;
+    bool isLoading;
+    bool isReplaceConformed;
 
-    private bool isSaved = true;
-    private EditorControlMethod lastEditorState;
-    private TextSelection? lastFindPosition;
+    bool isSaved = true;
+    public EditorControlMethod EditorState { get; private set; }
+    TextSelection? lastFindPosition;
 
-    private double lastMousePointX; //Used for drag scroll
+    double lastMousePointX; //Used for drag scroll
 
-    private int selectedDifficulty = -1;
-    private double songLength;
+    int selectedDifficulty = -1;
+    double songLength;
 
-    private SoundSetting soundSetting = new();
-    private bool UpdateCheckLock;
+    SoundSetting soundSetting = new();
+    bool UpdateCheckLock;
 
 
     //*UI DRAWING
-    private readonly Timer visualEffectRefreshTimer = new(1);
+    readonly Timer visualEffectRefreshTimer = new(1);
 
-    private WriteableBitmap? WaveBitmap;
+    WriteableBitmap? WaveBitmap;
 
     //*TEXTBOX CONTROL
     private string GetRawFumenText()
@@ -266,8 +266,8 @@ public partial class MainWindow : Window
             return;
         }
 
-        maidataDir = path;
-        SafeTerminationDetector.Of().ChangePath(maidataDir);
+        MaidataDir = path;
+        SafeTerminationDetector.Of().ChangePath(MaidataDir);
         SetRawFumenText("");
         if (bgmStream != -1024)
         {
@@ -357,8 +357,8 @@ public partial class MainWindow : Window
     void SetErrCount<T>(T eCount) => Dispatcher.Invoke(() => ErrCount.Content = $"{eCount}");
     private void ReadWaveFromFile()
     {
-        var useOgg = File.Exists(maidataDir + "/track.ogg");
-        var bgmDecode = Bass.BASS_StreamCreateFile(maidataDir + "/track" + (useOgg ? ".ogg" : ".mp3"), 0L, 0L, BASSFlag.BASS_STREAM_DECODE);
+        var useOgg = File.Exists(MaidataDir + "/track.ogg");
+        var bgmDecode = Bass.BASS_StreamCreateFile(MaidataDir + "/track" + (useOgg ? ".ogg" : ".mp3"), 0L, 0L, BASSFlag.BASS_STREAM_DECODE);
         try
         {
             songLength = Bass.BASS_ChannelBytes2Seconds(bgmDecode,
@@ -370,7 +370,7 @@ public partial class MainWindow : Window
                     wavedBs[i] = Bass.BASS_ChannelGetLevels(bgmDecode, 0.02f, BASSLevel.BASS_LEVEL_MONO)[0];
                 }*/
             Bass.BASS_StreamFree(bgmDecode);
-            var bgmSample = Bass.BASS_SampleLoad(maidataDir + "/track" + (useOgg ? ".ogg" : ".mp3"), 0, 0, 1, BASSFlag.BASS_DEFAULT);
+            var bgmSample = Bass.BASS_SampleLoad(MaidataDir + "/track" + (useOgg ? ".ogg" : ".mp3"), 0, 0, 1, BASSFlag.BASS_DEFAULT);
             var bgmInfo = Bass.BASS_SampleGetInfo(bgmSample);
             var freq = bgmInfo.freq;
             var sampleCount = (long)(songLength * freq * 2);
@@ -432,28 +432,28 @@ public partial class MainWindow : Window
         if (selectedDifficulty == -1) return;
         SimaiProcess.fumens[selectedDifficulty] = GetRawFumenText();
         SimaiProcess.first = float.Parse(OffsetTextBox.Text);
-        if (maidataDir == "")
+        if (MaidataDir == "")
         {
             var saveDialog = new SaveFileDialog
             {
                 Filter = "maidata.txt|maidata.txt",
                 OverwritePrompt = true
             };
-            if ((bool)saveDialog.ShowDialog()!) maidataDir = new FileInfo(saveDialog.FileName).DirectoryName!;
+            if ((bool)saveDialog.ShowDialog()!) MaidataDir = new FileInfo(saveDialog.FileName).DirectoryName!;
         }
 
-        SimaiProcess.SaveData(maidataDir + "/maidata.bak.txt");
+        SimaiProcess.SaveData(MaidataDir + "/maidata.bak.txt");
         SaveSetting();
         if (writeToDisk)
         {
-            SimaiProcess.SaveData(maidataDir + "/maidata.txt");
+            SimaiProcess.SaveData(MaidataDir + "/maidata.txt");
             SetSavedState(true);
         }
     }
 
     private void SaveSetting()
     {
-        if (maidataDir == "") return;
+        if (MaidataDir == "") return;
         var setting = new MajSetting
         {
             lastEditDiff = selectedDifficulty,
@@ -469,12 +469,12 @@ public partial class MainWindow : Window
         Bass.BASS_ChannelGetAttribute(slideStream, BASSAttribute.BASS_ATTRIB_VOL, ref setting.Slide_Level);
         Bass.BASS_ChannelGetAttribute(hanabiStream, BASSAttribute.BASS_ATTRIB_VOL, ref setting.Hanabi_Level);
         var json = JsonConvert.SerializeObject(setting);
-        File.WriteAllText(maidataDir + "/" + majSettingFilename, json);
+        File.WriteAllText(MaidataDir + "/" + majSettingFilename, json);
     }
 
     private void ReadSetting()
     {
-        var path = maidataDir + "/" + majSettingFilename;
+        var path = MaidataDir + "/" + majSettingFilename;
         if (!File.Exists(path)) return;
         var setting = JsonConvert.DeserializeObject<MajSetting>(File.ReadAllText(path));
         LevelSelector.SelectedIndex = setting!.lastEditDiff;
@@ -983,12 +983,12 @@ public partial class MainWindow : Window
         return localizedString ?? key;
     }
 
-    private void TogglePlay(PlayMethod playMethod = PlayMethod.Normal)
+    private async Task TogglePlay(PlayMethod playMethod = PlayMethod.Normal)
     {
-        if (Op_Button.IsEnabled == false) return;
+        if (!Op_Button.IsEnabled) return;
 
-        if (lastEditorState == EditorControlMethod.Start || playMethod != PlayMethod.Normal)
-            if (!sendRequestStop())
+        if (EditorState == EditorControlMethod.Start || playMethod != PlayMethod.Normal)
+            if (!RequestToStop())
                 return;
 
         FumenContent.Focus();
@@ -1012,8 +1012,8 @@ public partial class MainWindow : Window
                 //TODO: i18n
                 MessageBox.Show(GetLocalizedString("AskRender"), GetLocalizedString("Attention"));
                 InternalSwitchWindow(false);
-                generateSoundEffectList(0.0, isOpIncluded);
-                var task = new Task(() => renderSoundEffect(5d));
+                await GenerateSoundEffectList(0.0, isOpIncluded);
+                var task = new Task(() => RenderSoundEffect(5d));
                 try
                 {
                     task.Start();
@@ -1026,36 +1026,34 @@ public partial class MainWindow : Window
                     return;
                 }
 
-                if (!sendRequestRun(startAt, playMethod)) return;
+                if (!RequestToRun(startAt, playMethod)) return;
                 break;
             case PlayMethod.Op:
-                generateSoundEffectList(0.0, isOpIncluded);
+                await GenerateSoundEffectList(0.0, isOpIncluded);
                 InternalSwitchWindow(false);
                 Bass.BASS_ChannelSetPosition(bgmStream, 0);
                 startAt = DateTime.Now.AddSeconds(5d);
                 Bass.BASS_ChannelPlay(trackStartStream, true);
-                Task.Run(() =>
+
+                if (!RequestToRun(startAt, playMethod)) return;
+                while (DateTime.Now.Ticks < startAt.Ticks)
+                    if (EditorState != EditorControlMethod.Start)
+                        return;
+                Dispatcher.Invoke(() =>
                 {
-                    if (!sendRequestRun(startAt, playMethod)) return;
-                    while (DateTime.Now.Ticks < startAt.Ticks)
-                        if (lastEditorState != EditorControlMethod.Start)
-                            return;
-                    Dispatcher.Invoke(() =>
-                    {
-                        playStartTime =
-                            Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream));
-                        SimaiProcess.ClearNoteListPlayedState();
-                        StartSELoop();
-                        //soundEffectTimer.Start();
-                        waveStopMonitorTimer.Start();
-                        visualEffectRefreshTimer.Start();
-                        Bass.BASS_ChannelPlay(bgmStream, false);
-                    });
+                    playStartTime =
+                        Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream));
+                    SimaiProcess.ClearNoteListPlayedState();
+                    StartSELoop();
+                    //soundEffectTimer.Start();
+                    waveStopMonitorTimer.Start();
+                    visualEffectRefreshTimer.Start();
+                    Bass.BASS_ChannelPlay(bgmStream, false);
                 });
                 break;
             case PlayMethod.Normal:
                 playStartTime = Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream));
-                generateSoundEffectList(playStartTime, isOpIncluded);
+                await GenerateSoundEffectList(playStartTime, isOpIncluded);
                 SimaiProcess.ClearNoteListPlayedState();
                 StartSELoop();
                 //soundEffectTimer.Start();
@@ -1065,13 +1063,13 @@ public partial class MainWindow : Window
                 Bass.BASS_ChannelPlay(bgmStream, false);
                 Task.Run(() =>
                 {
-                    if (lastEditorState == EditorControlMethod.Pause)
+                    if (EditorState == EditorControlMethod.Pause)
                     {
-                        if (!sendRequestContinue(startAt)) return;
+                        if (!RequestToContinue(startAt)) return;
                     }
                     else
                     {
-                        if (!sendRequestRun(startAt, playMethod)) return;
+                        if (!RequestToRun(startAt, playMethod)) return;
                     }
                 });
                 break;
@@ -1094,7 +1092,7 @@ public partial class MainWindow : Window
         //soundEffectTimer.Stop();
         waveStopMonitorTimer.Stop();
         visualEffectRefreshTimer.Stop();
-        sendRequestPause();
+        RequestToPause();
         DrawWave();
     }
 
@@ -1111,25 +1109,25 @@ public partial class MainWindow : Window
         //soundEffectTimer.Stop();
         waveStopMonitorTimer.Stop();
         visualEffectRefreshTimer.Stop();
-        sendRequestStop();
+        RequestToStop();
         Bass.BASS_ChannelSetPosition(bgmStream, playStartTime);
         DrawWave();
     }
 
-    private void TogglePlayAndPause(PlayMethod playMethod = PlayMethod.Normal)
+    private async Task TogglePlayAndPause(PlayMethod playMethod = PlayMethod.Normal)
     {
         if (isPlaying)
             TogglePause();
         else
         {
-            if (lastEditorState != EditorControlMethod.Pause && 
+            if (EditorState != EditorControlMethod.Pause && 
                 editorSetting!.SyntaxCheckLevel == 2 && 
                 SyntaxChecker.GetErrorCount() != 0)
             {
                 ShowErrorWindow();
                 return;
             }
-            TogglePlay(playMethod);
+            await TogglePlay(playMethod);
         }
             
     }
@@ -1162,71 +1160,68 @@ public partial class MainWindow : Window
 
     private void SetBgmPosition(double time)
     {
-        if (lastEditorState == EditorControlMethod.Pause) sendRequestStop();
+        if (EditorState == EditorControlMethod.Pause) RequestToStop();
         Bass.BASS_ChannelSetPosition(bgmStream, time);
     }
 
 
     //*VIEW COMMUNICATION
-    private bool sendRequestStop()
+    private bool RequestToStop()
     {
-        var requestStop = new EditRequestjson
+        var req = new EditRequest
         {
-            control = EditorControlMethod.Stop
+            Control = EditorControlMethod.Stop
         };
-        var json = JsonConvert.SerializeObject(requestStop);
-        var response = WebControl.RequestPOST("http://localhost:8013/", json);
-        if (response == "ERROR")
+        var response = WebControl.RequestPost("http://localhost:8013/", req);
+        if (!response.IsSuccess)
         {
             MessageBox.Show(GetLocalizedString("PortClear"));
             return false;
         }
 
-        lastEditorState = EditorControlMethod.Stop;
+        EditorState = EditorControlMethod.Stop;
         return true;
     }
 
-    private bool sendRequestPause()
+    private bool RequestToPause()
     {
-        var requestStop = new EditRequestjson
+        var req = new EditRequest
         {
-            control = EditorControlMethod.Pause
+            Control = EditorControlMethod.Pause
         };
-        var json = JsonConvert.SerializeObject(requestStop);
-        var response = WebControl.RequestPOST("http://localhost:8013/", json);
-        if (response == "ERROR")
+        var response = WebControl.RequestPost("http://localhost:8013/", req);
+        if (!response.IsSuccess)
         {
             MessageBox.Show(GetLocalizedString("PortClear"));
             return false;
         }
 
-        lastEditorState = EditorControlMethod.Pause;
+        EditorState = EditorControlMethod.Pause;
         return true;
     }
 
-    private bool sendRequestContinue(DateTime StartAt)
+    private bool RequestToContinue(DateTime StartAt)
     {
-        var request = new EditRequestjson
+        var req = new EditRequest
         {
-            control = EditorControlMethod.Continue,
-            startAt = StartAt.Ticks,
-            startTime = (float)Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream)),
-            audioSpeed = GetPlaybackSpeed(),
-            editorPlayMethod = editorSetting.editorPlayMethod
+            Control = EditorControlMethod.Continue,
+            StartAt = StartAt.Ticks,
+            StartTime = (float)Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream)),
+            AudioSpeed = GetPlaybackSpeed(),
+            EditorPlayMethod = editorSetting!.editorPlayMethod
         };
-        var json = JsonConvert.SerializeObject(request);
-        var response = WebControl.RequestPOST("http://localhost:8013/", json);
-        if (response == "ERROR")
+        var response = WebControl.RequestPost("http://localhost:8013/", req);
+        if (!response.IsSuccess)
         {
             MessageBox.Show(GetLocalizedString("PortClear"));
             return false;
         }
 
-        lastEditorState = EditorControlMethod.Start;
+        EditorState = EditorControlMethod.Start;
         return true;
     }
 
-    private bool sendRequestRun(DateTime StartAt, PlayMethod playMethod)
+    private bool RequestToRun(DateTime StartAt, PlayMethod playMethod)
     {
         var jsonStruct = new Majson();
         foreach (var note in SimaiProcess.notelist)
@@ -1243,57 +1238,52 @@ public partial class MainWindow : Window
         jsonStruct.diffNum = selectedDifficulty;
 
         var json = JsonConvert.SerializeObject(jsonStruct);
-        var path = maidataDir + "/majdata.json";
+        var path = MaidataDir + "/majdata.json";
         File.WriteAllText(path, json);
 
-        var request = new EditRequestjson();
-        if (playMethod == PlayMethod.Op)
-            request.control = EditorControlMethod.OpStart;
-        else if (playMethod == PlayMethod.Normal)
-            request.control = EditorControlMethod.Start;
-        else
-            request.control = EditorControlMethod.Record;
+        
+        float startTime = 0;
+        EditorControlMethod control = playMethod switch
+        {
+            PlayMethod.Op => EditorControlMethod.OpStart,
+            PlayMethod.Normal => EditorControlMethod.Start,
+            _ => EditorControlMethod.Record
+        };
 
         Dispatcher.Invoke(() =>
         {
-            request.jsonPath = path;
-            request.startAt = StartAt.Ticks;
-            request.startTime =
-                (float)Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream));
+            startTime = (float)Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream));
             // request.playSpeed = float.Parse(ViewerSpeed.Text);
             // 将maimaiDX速度换算为View中的单位速度 MajSpeed = 107.25 / (71.4184491 * (MaiSpeed + 0.9975) ^ -0.985558604)
-            request.noteSpeed = editorSetting!.playSpeed;
-            request.touchSpeed = editorSetting!.touchSpeed;
-            request.backgroundCover = editorSetting!.backgroundCover;
-            request.comboStatusType = editorSetting!.comboStatusType;
-            request.audioSpeed = GetPlaybackSpeed();
-            request.smoothSlideAnime = editorSetting!.SmoothSlideAnime;
-            request.editorPlayMethod = editorSetting.editorPlayMethod;
         });
 
-        json = JsonConvert.SerializeObject(request);
-        var response = WebControl.RequestPOST("http://localhost:8013/", json);
-        if (response == "ERROR")
+        var req = new EditRequest()
+        {
+            Control = control,
+            JsonPath = path,
+            StartAt = StartAt.Ticks,
+            StartTime = startTime,
+            NoteSpeed = editorSetting!.playSpeed,
+            TouchSpeed = editorSetting!.touchSpeed,
+            BackgroundCover = editorSetting!.backgroundCover,
+            ComboStatusType = editorSetting!.comboStatusType,
+            AudioSpeed = GetPlaybackSpeed(),
+            SmoothSlideAnime = editorSetting!.SmoothSlideAnime,
+            EditorPlayMethod = editorSetting.editorPlayMethod
+        };
+
+        var response = WebControl.RequestPost("http://localhost:8013/", req);
+        if (!response.IsSuccess)
         {
             MessageBox.Show(GetLocalizedString("PortClear"));
             return false;
         }
 
-        lastEditorState = EditorControlMethod.Start;
+        EditorState = EditorControlMethod.Start;
         return true;
     }
 
-    [DllImport("user32.dll")]
-    public static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
-
-    [DllImport("user32.dll", EntryPoint = "MoveWindow")]
-    public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
-
-    [DllImport("user32.dll")]
-    public static extern bool ShowWindow(IntPtr hwnd, int nCmdShow);
-
-    [DllImport("user32.dll")]
-    public static extern bool SwitchToThisWindow(IntPtr hWnd, bool fAltTab);
+    
 
     private bool CheckAndStartView()
     {
@@ -1558,15 +1548,5 @@ public partial class MainWindow : Window
     public void OpenFile(string path)
     {
         initFromFile(path);
-    }
-
-
-    //*PLAY CONTROL
-
-    private enum PlayMethod
-    {
-        Normal,
-        Op,
-        Record
     }
 }

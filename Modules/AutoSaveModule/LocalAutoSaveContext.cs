@@ -12,9 +12,9 @@ public class LocalAutoSaveContext : IAutoSaveContext
 {
     public string GetSavePath()
     {
-        var maidataDir = MainWindow.maidataDir;
+        var maidataDir = MainWindow.MaidataDir;
         if (maidataDir.Length == 0) throw new LocalDirNotOpenYetException();
 
-        return MainWindow.maidataDir + "/.autosave";
+        return MainWindow.MaidataDir + "/.autosave";
     }
 }

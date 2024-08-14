@@ -38,10 +38,10 @@ public partial class Infomation : Window
 
     private void LoadImageFromDefault()
     {
-        if (File.Exists(MainWindow.maidataDir + "/bg.png"))
-            LoadImageFromByte(File.ReadAllBytes(MainWindow.maidataDir + "/bg.png"));
-        else if (File.Exists(MainWindow.maidataDir + "/bg.jpg"))
-            LoadImageFromByte(File.ReadAllBytes(MainWindow.maidataDir + "/bg.jpg"));
+        if (File.Exists(MainWindow.MaidataDir + "/bg.png"))
+            LoadImageFromByte(File.ReadAllBytes(MainWindow.MaidataDir + "/bg.png"));
+        else if (File.Exists(MainWindow.MaidataDir + "/bg.jpg"))
+            LoadImageFromByte(File.ReadAllBytes(MainWindow.MaidataDir + "/bg.jpg"));
         else
             SaltImage.Source =
                 new BitmapImage(new Uri("pack://application:,,,/MajdataEdit;component/Image/bg_dummy.jpg"));
@@ -87,13 +87,13 @@ public partial class Infomation : Window
             if (pic.MimeType.Contains("jpeg"))
             {
                 DelBGs();
-                File.WriteAllBytes(MainWindow.maidataDir + "/bg.jpg", pic.Data.Data);
+                File.WriteAllBytes(MainWindow.MaidataDir + "/bg.jpg", pic.Data.Data);
             }
 
             if (pic.MimeType.Contains("png"))
             {
                 DelBGs();
-                File.WriteAllBytes(MainWindow.maidataDir + "/bg.png", pic.Data.Data);
+                File.WriteAllBytes(MainWindow.MaidataDir + "/bg.png", pic.Data.Data);
             }
 
             Console.WriteLine(pic.MimeType);
@@ -102,7 +102,7 @@ public partial class Infomation : Window
 
     private void ReadTrackButton_Click(object sender, RoutedEventArgs e)
     {
-        ReadMetadata(MainWindow.maidataDir + "/track");
+        ReadMetadata(MainWindow.MaidataDir + "/track");
     }
 
     private void ReadFileButton_Click(object sender, RoutedEventArgs e)
@@ -127,14 +127,14 @@ public partial class Infomation : Window
             var info = new FileInfo(openFileDialog.FileName);
             LoadImageFromByte(data);
             DelBGs();
-            File.Copy(openFileDialog.FileName, MainWindow.maidataDir + "/bg" + info.Extension);
+            File.Copy(openFileDialog.FileName, MainWindow.MaidataDir + "/bg" + info.Extension);
         }
     }
 
     private void DelBGs()
     {
-        if (File.Exists(MainWindow.maidataDir + "/bg.png")) File.Delete(MainWindow.maidataDir + "/bg.png");
-        if (File.Exists(MainWindow.maidataDir + "/bg.jpg")) File.Delete(MainWindow.maidataDir + "/bg.jpg");
+        if (File.Exists(MainWindow.MaidataDir + "/bg.png")) File.Delete(MainWindow.MaidataDir + "/bg.png");
+        if (File.Exists(MainWindow.MaidataDir + "/bg.jpg")) File.Delete(MainWindow.MaidataDir + "/bg.jpg");
     }
 
     private void CancelButton_Click(object sender, RoutedEventArgs e)
