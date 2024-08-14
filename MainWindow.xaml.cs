@@ -34,7 +34,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void Window_Loaded(object sender, RoutedEventArgs e)
+    private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
         CheckAndStartView();
 
@@ -60,7 +60,12 @@ public partial class MainWindow : Window
         waveStopMonitorTimer.Elapsed += WaveStopMonitorTimer_Elapsed;
         playbackSpeedHideTimer.Elapsed += PlbHideTimer_Elapsed;
 
-        if (editorSetting!.AutoCheckUpdate) CheckUpdate(true);
+        if (editorSetting!.AutoCheckUpdate) 
+        {
+            CheckUpdateButton.IsEnabled = false;
+            await CheckUpdate(true);
+            CheckUpdateButton.IsEnabled = true;
+        }
 
         #region 异常退出处理
 

@@ -12,7 +12,7 @@ namespace MajdataEdit;
 public partial class MainWindow : Window
 {
     #region Left
-    private async Task PlayAndPauseButton_Click(object sender, RoutedEventArgs e)
+    private async void PlayAndPauseButton_Click(object sender, RoutedEventArgs e)
     {
         PlayAndPauseButton.IsEnabled = false;
         StopButton.IsEnabled = false;
@@ -266,9 +266,11 @@ public partial class MainWindow : Window
         }
     }
 
-    private void CheckUpdate_Click(object? sender, RoutedEventArgs e)
+    private async void CheckUpdate_Click(object? sender, RoutedEventArgs e)
     {
-        CheckUpdate();
+        CheckUpdateButton.IsEnabled = false;
+        await CheckUpdate();
+        CheckUpdateButton.IsEnabled = true;
     }
 
     private void Menu_AutosaveRecover_Click(object? sender, RoutedEventArgs e)

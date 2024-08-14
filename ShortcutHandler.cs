@@ -14,7 +14,7 @@ public partial class MainWindow : Window
         TogglePlayAndStop();
     }
 
-    private async Task StopPlaying_CanExecute(object? sender, CanExecuteRoutedEventArgs e) //快捷键
+    private async void StopPlaying_CanExecute(object? sender, CanExecuteRoutedEventArgs e) //快捷键
     {
         PlayAndPauseButton.IsEnabled = false;
         StopButton.IsEnabled = false;
