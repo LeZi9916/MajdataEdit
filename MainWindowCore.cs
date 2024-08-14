@@ -19,6 +19,7 @@ using System.Windows.Threading;
 using DiscordRPC;
 using MajdataEdit.Modules.AutoSaveModule;
 using MajdataEdit.Modules.SyntaxModule;
+using MajdataEdit.Types;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -1407,7 +1408,7 @@ public partial class MainWindow : Window
         OverrideModeTipsPopup.Visibility = fumenOverwriteMode ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private void CheckUpdate(bool onStart = false)
+    private async Task CheckUpdate(bool onStart = false)
     {
         if (UpdateCheckLock) return;
         UpdateCheckLock = true;
@@ -1516,7 +1517,7 @@ public partial class MainWindow : Window
         try
         {
             requestHandler(
-                WebControl.RequestGETAsync("http://api.github.com/repos/LingFeng-bbben/MajdataView/releases/latest"));
+                await WebControl.RequestGETAsync("http://api.github.com/repos/LingFeng-bbben/MajdataView/releases/latest"));
         } catch {
             // 网络请求失败
             if (!onStart) MessageBox.Show(GetLocalizedString("RequestFail"), GetLocalizedString("CheckUpdate"));
