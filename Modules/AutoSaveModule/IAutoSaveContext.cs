@@ -3,7 +3,7 @@
   See LICENSE in the project root for license information.
 */
 
-namespace MajdataEdit.AutoSaveModule;
+namespace MajdataEdit.Modules.AutoSaveModule;
 
 /// <summary>
 ///     自动保存上下文接口

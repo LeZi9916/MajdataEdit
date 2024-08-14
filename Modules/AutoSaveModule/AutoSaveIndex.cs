@@ -3,7 +3,7 @@
   See LICENSE in the project root for license information.
 */
 
-namespace MajdataEdit.AutoSaveModule;
+namespace MajdataEdit.Modules.AutoSaveModule;
 
 /// <summary>
 ///     自动保存索引 用于索引当前环境中自动保存的文件

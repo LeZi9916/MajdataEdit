@@ -10,11 +10,11 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using DiscordRPC.Logging;
-using MajdataEdit.AutoSaveModule;
 using Microsoft.Win32;
 using Un4seen.Bass;
-using MajdataEdit.SyntaxModule;
 using Timer = System.Timers.Timer;
+using MajdataEdit.Modules.SyntaxModule;
+using MajdataEdit.Modules.AutoSaveModule;
 
 namespace MajdataEdit;
 

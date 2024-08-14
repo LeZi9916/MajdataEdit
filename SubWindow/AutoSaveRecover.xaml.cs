@@ -2,7 +2,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
-using MajdataEdit.AutoSaveModule;
+using MajdataEdit.Modules.AutoSaveModule;
 
 namespace MajdataEdit;
 

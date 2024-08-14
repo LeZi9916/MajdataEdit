@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
-        <TargetFramework>net6.0-windows</TargetFramework>
+        <TargetFramework>net8.0-windows</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <UseWPF>true</UseWPF>
@@ -30,11 +30,11 @@
         <PackageReference Include="XAMLMarkupExtensions" Version="2.1.3" />
     </ItemGroup>
     <ItemGroup>
-        <ContentWithTargetPath Include="bass.dll">
+        <ContentWithTargetPath Include="Modules/bass.dll">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <TargetPath>bass.dll</TargetPath>
         </ContentWithTargetPath>
-        <ContentWithTargetPath Include="bass_fx.dll">
+        <ContentWithTargetPath Include="Modules/bass_fx.dll">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <TargetPath>bass_fx.dll</TargetPath>
         </ContentWithTargetPath>

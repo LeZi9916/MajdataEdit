@@ -5,7 +5,7 @@
 
 using System.IO;
 
-namespace MajdataEdit.AutoSaveModule;
+namespace MajdataEdit.Modules.AutoSaveModule;
 
 public class AutoSaveRecoverer : IAutoSaveRecoverer
 {
@@ -43,7 +43,7 @@ public class AutoSaveRecoverer : IAutoSaveRecoverer
         }
 
         result.AddRange(localIndex.GetFileInfos());
-        result.Sort(delegate(AutoSaveIndex.FileInfo f1, AutoSaveIndex.FileInfo f2)
+        result.Sort(delegate (AutoSaveIndex.FileInfo f1, AutoSaveIndex.FileInfo f2)
         {
             return f2.SavedTime.CompareTo(f1.SavedTime);
         });
@@ -55,7 +55,7 @@ public class AutoSaveRecoverer : IAutoSaveRecoverer
     {
         var result = new List<AutoSaveIndex.FileInfo>();
         result.AddRange(globalIndex.GetFileInfos());
-        result.Sort(delegate(AutoSaveIndex.FileInfo f1, AutoSaveIndex.FileInfo f2)
+        result.Sort(delegate (AutoSaveIndex.FileInfo f1, AutoSaveIndex.FileInfo f2)
         {
             return f2.SavedTime.CompareTo(f1.SavedTime);
         });

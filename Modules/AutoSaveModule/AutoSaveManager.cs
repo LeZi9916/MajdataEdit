@@ -6,7 +6,7 @@
 using System.Timers;
 using Timer = System.Timers.Timer;
 
-namespace MajdataEdit.AutoSaveModule;
+namespace MajdataEdit.Modules.AutoSaveModule;
 
 /// <summary>
 ///     自动保存管理类

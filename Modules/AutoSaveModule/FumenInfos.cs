@@ -6,7 +6,7 @@
 using System.IO;
 using System.Text;
 
-namespace MajdataEdit.AutoSaveModule;
+namespace MajdataEdit.Modules.AutoSaveModule;
 
 /// <summary>
 ///     谱面信息

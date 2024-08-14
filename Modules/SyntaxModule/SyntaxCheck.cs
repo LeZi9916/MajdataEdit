@@ -2,7 +2,7 @@
 using System.Windows.Media.Animation;
 using System.Windows.Navigation;
 
-namespace MajdataEdit.SyntaxModule
+namespace MajdataEdit.Modules.SyntaxModule
 {
     enum InfomationLevel
     {
@@ -28,16 +28,16 @@ namespace MajdataEdit.SyntaxModule
     {
         public string eMessage;
         public InfomationLevel Level;
-        public SimaiErrorInfo(int _posX, int _posY, string eMessage,InfomationLevel level = InfomationLevel.Error) : base(_posX, _posY)
+        public SimaiErrorInfo(int _posX, int _posY, string eMessage, InfomationLevel level = InfomationLevel.Error) : base(_posX, _posY)
         {
             this.eMessage = eMessage;
-            this.Level = level;
+            Level = level;
         }
     }
     internal static class SyntaxChecker
     {
         static readonly string[] SlideTypeList = { "qq", "pp", "q", "p", "w", "z", "s", "V", "v", "<", ">", "^", "-" };
-        static readonly char[] SensorList = { 'A','B','C','D','E'};
+        static readonly char[] SensorList = { 'A', 'B', 'C', 'D', 'E' };
         internal static List<SimaiErrorInfo> ErrorList = new();
 
         public static int GetErrorCount() => ErrorList.Where(e => e.Level is InfomationLevel.Error).Count();
@@ -47,7 +47,7 @@ namespace MajdataEdit.SyntaxModule
         /// <param name="noteStr"></param>
         internal static async Task ScanAsync(string str)
         {
-            Action<string, int, int,string, InfomationLevel> addInfo = (s, x, y, localStr,level) =>
+            Action<string, int, int, string, InfomationLevel> addInfo = (s, x, y, localStr, level) =>
             {
                 ErrorList.Add(new SimaiErrorInfo(x, y,
                     string.Format(
@@ -56,16 +56,16 @@ namespace MajdataEdit.SyntaxModule
                         y,
                         x), level));
             };
-            Action<string, int, int> addError = (s, x, y) => addInfo(s,x,y, "SyntaxError",InfomationLevel.Error);
+            Action<string, int, int> addError = (s, x, y) => addInfo(s, x, y, "SyntaxError", InfomationLevel.Error);
 
             await Task.Run(() =>
             {
                 ErrorList.Clear();
                 int line = 1;
-                int column = 1;                
+                int column = 1;
                 var simaiChart = str.Split(",");
 
-                if(!string.IsNullOrEmpty(str))
+                if (!string.IsNullOrEmpty(str))
                 {
                     if (simaiChart.Last().Replace("\n", "") == "E")//移除结尾E
                         simaiChart = simaiChart.SkipLast(1).ToArray();
@@ -89,8 +89,8 @@ namespace MajdataEdit.SyntaxModule
                         continue;
 
                     //分割多押与伪多押
-                    var notes = simaiStr.Split(new char[] { '/','`'});
-                    for (int i = 0;i < notes.Length;i++)
+                    var notes = simaiStr.Split(new char[] { '/', '`' });
+                    for (int i = 0; i < notes.Length; i++)
                     {
                         var noteStr = notes[i];
 
@@ -122,14 +122,14 @@ namespace MajdataEdit.SyntaxModule
                 var notes = raw.Split("/");
 
                 foreach (var _note in notes)
-                    NoteSyntaxCheck(_note,note.rawTextPositionX,note.rawTextPositionY);
+                    NoteSyntaxCheck(_note, note.rawTextPositionX, note.rawTextPositionY);
             }
 
         }
         /// <summary>
         /// 检查BPM与拍号的合法性
         /// </summary>
-        static bool SpecialSyntaxCheck(ref string simaiStr,int posX,int posY)
+        static bool SpecialSyntaxCheck(ref string simaiStr, int posX, int posY)
         {
             int bpmHeadCount = 0;
             int bpmTailCount = 0;
@@ -154,7 +154,7 @@ namespace MajdataEdit.SyntaxModule
             for (int i = 0; i < simaiStr.Length; i++)
             {
                 char c = simaiStr[i];
-                switch(c)
+                switch (c)
                 {
                     case '(':
                         bpmHeadCount++;
@@ -172,10 +172,10 @@ namespace MajdataEdit.SyntaxModule
             }
 
             //纯Note语句跳过检查
-            if ((bpmTailCount + bpmHeadCount + beatHeadCount + beatTailCount) == 0)
+            if (bpmTailCount + bpmHeadCount + beatHeadCount + beatTailCount == 0)
                 return true;
 
-            if(bpmHeadCount > 1 || bpmTailCount > 1)
+            if (bpmHeadCount > 1 || bpmTailCount > 1)
             {
                 addError(simaiStr);
                 return false;
@@ -210,18 +210,18 @@ namespace MajdataEdit.SyntaxModule
             {
                 int bpmEndIndex = simaiStr.IndexOf(')');
                 int beatEndIndex = simaiStr.IndexOf('}');
-                
+
                 bool hadBpm = bpmFirstIndex != bpmEndIndex;
                 bool hadBeat = beatFirstIndex != beatEndIndex;
 
-                if((hadBpm || hadBeat) && simaiStr[0] is not ('(' or '{'))
+                if ((hadBpm || hadBeat) && simaiStr[0] is not ('(' or '{'))
                 {
                     addError(simaiStr);
                     return false;
-                }               
+                }
 
                 //HSpeed变速语法检查
-                if(tagIndex.Length != 0)
+                if (tagIndex.Length != 0)
                 {
                     var tagHead = tagIndex[0];
                     var tagTail = tagIndex[1];
@@ -246,11 +246,11 @@ namespace MajdataEdit.SyntaxModule
                     }
 
                     //删除"<HS*1.0>"字符串，传递给NoteSyntaxChecker进行Note语法检查
-                    simaiStr = simaiStr.Remove(tagHead, (tagTail - tagHead) + 1);
+                    simaiStr = simaiStr.Remove(tagHead, tagTail - tagHead + 1);
                 }
 
                 //有头无尾
-                if((bpmFirstIndex != -1 && bpmEndIndex == -1) || (bpmFirstIndex != -1 && beatEndIndex == -1))
+                if (bpmFirstIndex != -1 && bpmEndIndex == -1 || bpmFirstIndex != -1 && beatEndIndex == -1)
                 {
                     addError(simaiStr);
                     return false;
@@ -260,17 +260,17 @@ namespace MajdataEdit.SyntaxModule
                 if (hadBpm && hadBeat)
                 {
                     //(){}
-                    if (bpmEndIndex < beatFirstIndex && (beatFirstIndex != bpmEndIndex + 1))
+                    if (bpmEndIndex < beatFirstIndex && beatFirstIndex != bpmEndIndex + 1)
                     {
                         addError(simaiStr);
                         return false;
                     }
-                    else if(bpmEndIndex < beatFirstIndex && (beatFirstIndex == bpmEndIndex + 1))
-                    { 
+                    else if (bpmEndIndex < beatFirstIndex && beatFirstIndex == bpmEndIndex + 1)
+                    {
                         // noting to do
                     }
                     //{}()
-                    else if (beatEndIndex < bpmFirstIndex && (bpmFirstIndex != beatEndIndex + 1))
+                    else if (beatEndIndex < bpmFirstIndex && bpmFirstIndex != beatEndIndex + 1)
                     {
                         addError(simaiStr);
                         return false;
@@ -278,19 +278,19 @@ namespace MajdataEdit.SyntaxModule
 
                 }
 
-                if (hadBeat && !IsInteger(simaiStr[(beatFirstIndex+1)..(beatEndIndex)]))
+                if (hadBeat && !IsInteger(simaiStr[(beatFirstIndex + 1)..beatEndIndex]))
                 {
                     addError(simaiStr);
                     return false;
                 }
-                if (hadBpm && !IsNum(simaiStr[(bpmFirstIndex + 1)..(bpmEndIndex)]))
+                if (hadBpm && !IsNum(simaiStr[(bpmFirstIndex + 1)..bpmEndIndex]))
                 {
                     addError(simaiStr);
                     return false;
                 }
 
                 simaiStr = simaiStr[(Math.Max(bpmEndIndex, beatEndIndex) + 1)..];
-                
+
             }
             return true;
         }
@@ -308,14 +308,14 @@ namespace MajdataEdit.SyntaxModule
             List<int> bodyHead = new();
             List<int> bodyTail = new();
             int? tagHead = null;
-            int? tagTail = null;            
-            
-            for(int i = 0;i < simaiStr.Length;i++)
+            int? tagTail = null;
+
+            for (int i = 0; i < simaiStr.Length; i++)
             {
-                if(i + 3 < simaiStr.Length)
+                if (i + 3 < simaiStr.Length)
                 {
                     var s = simaiStr[i..(i + 3)];
-                    if(s == "HS*")
+                    if (s == "HS*")
                     {
                         if (tagHead != null)
                             return null;
@@ -323,7 +323,7 @@ namespace MajdataEdit.SyntaxModule
                         tagTail = i + 2;
                     }
                 }
-                switch(simaiStr[i])
+                switch (simaiStr[i])
                 {
                     case '<':
                         bodyHead.Add(i);
@@ -358,21 +358,21 @@ namespace MajdataEdit.SyntaxModule
         /// <returns>
         /// "["与"]"的索引位置
         /// </returns>
-        static int[]? BodySyntaxCheck(string bodyStr,bool isSlide = false)
+        static int[]? BodySyntaxCheck(string bodyStr, bool isSlide = false)
         {
             List<int> bodyIndex = new();
             int bodyHeadCount = 0;
             int bodyTailCount = 0;
 
-            for(int index = 0;index < bodyStr.Length;index++)
+            for (int index = 0; index < bodyStr.Length; index++)
             {
                 char c = bodyStr[index];
-                if(c == '[')
+                if (c == '[')
                 {
                     bodyHeadCount++;
                     bodyIndex.Add(index);
                 }
-                else if(c == ']')
+                else if (c == ']')
                 {
                     bodyTailCount++;
                     bodyIndex.Add(index);
@@ -386,7 +386,7 @@ namespace MajdataEdit.SyntaxModule
                 return null;
             else if (!isSlide && (bodyHeadCount != 1 || bodyTailCount != 1))
                 return null;
-            else if (!isSlide && (bodyIndex.Last() != bodyStr.Length - 1))
+            else if (!isSlide && bodyIndex.Last() != bodyStr.Length - 1)
                 return null;
 
             return bodyIndex.ToArray();
@@ -396,7 +396,7 @@ namespace MajdataEdit.SyntaxModule
         /// 检查Note语句合法性，不检查BPM，拍号与变速语句
         /// </summary>
         /// <param name="noteStr"></param>
-        static bool NoteSyntaxCheck(string noteStr,int posX,int posY)
+        static bool NoteSyntaxCheck(string noteStr, int posX, int posY)
         {
             if (IsTap(noteStr))
                 return true;
@@ -446,7 +446,7 @@ namespace MajdataEdit.SyntaxModule
 
             int startIndex = bodyIndex[0];
             int endIndex = bodyIndex[1];
-            string body = holdStr[(startIndex + 1)..(endIndex)];
+            string body = holdStr[(startIndex + 1)..endIndex];
             if (body.Length < 2)//最短Hold参数: #2 (表示时值为2秒)
                 return false;
 
@@ -460,7 +460,7 @@ namespace MajdataEdit.SyntaxModule
                     if (splitBody.Length != 2)//正确格式: 150#4:1
                         return false;
                     else
-                        return RatioSyntaxCheck(splitBody[1]) && (double.TryParse(splitBody[0], out double i) && i > 0);
+                        return RatioSyntaxCheck(splitBody[1]) && double.TryParse(splitBody[0], out double i) && i > 0;
                 }
             }
             else
@@ -475,22 +475,22 @@ namespace MajdataEdit.SyntaxModule
         {
             if (slideStr.Length < 3)
                 return false;
-            if (slideStr[1] is ('b' or 'x') && slideStr[2] is ('b' or 'x'))
-                slideStr = slideStr.Remove(1,2);
-            else if(slideStr[1] is ('b' or 'x'))
+            if (slideStr[1] is 'b' or 'x' && slideStr[2] is 'b' or 'x')
+                slideStr = slideStr.Remove(1, 2);
+            else if (slideStr[1] is 'b' or 'x')
                 slideStr = slideStr.Remove(1, 1);
-            
+
             int starPoint = int.Parse(slideStr[0..1]);//星星头键位
 
             char[] typeList = string.Concat(SlideTypeList.Skip(2).ToArray()).ToCharArray();
             int slideCount = 0;
 
-            foreach(var _slideStr in slideStr.Split("*"))//同头Slide处理
+            foreach (var _slideStr in slideStr.Split("*"))//同头Slide处理
             {
                 //传过去的参数应当为 1-7-5[8:1] 或 -7-5[8:1]
                 int[]? bodyIndex = BodySyntaxCheck(_slideStr, true);
                 if (bodyIndex is null)//body部分错误
-                    return false;                
+                    return false;
 
                 int? startPoint = null;
                 int? endPoint = null;
@@ -522,7 +522,7 @@ namespace MajdataEdit.SyntaxModule
                             return false;
                         i++;
                     }
-                    
+
 
                     //获取Slide类型
                     if (typeList.Contains(_slideStr[i]))
@@ -562,9 +562,9 @@ namespace MajdataEdit.SyntaxModule
                     //检查下一字符是否为"["或"b"
                     //同时避免越界
 
-                    if ((i + 1 < _slideStr.Length) && _slideStr[i + 1] == '[')
+                    if (i + 1 < _slideStr.Length && _slideStr[i + 1] == '[')
                     {
-                        var headIndex = Array.IndexOf<int>(bodyIndex, ++i);
+                        var headIndex = Array.IndexOf(bodyIndex, ++i);
                         //未找到头部索引
                         if (headIndex == -1)
                             return false;
@@ -577,7 +577,7 @@ namespace MajdataEdit.SyntaxModule
                         else
                             return false;
                     }
-                    
+
                     subSlideCount++;
                     if (i + 1 >= _slideStr.Length)
                         break;
@@ -590,7 +590,7 @@ namespace MajdataEdit.SyntaxModule
                     return false;
 
                 //参数检查
-                Func<int,bool> bodyChecker = i =>
+                Func<int, bool> bodyChecker = i =>
                 {
                     int bodyStartIndex = bodyIndex[i * 2];
                     int bodyEndIndex = bodyIndex[i * 2 + 1];
@@ -655,7 +655,7 @@ namespace MajdataEdit.SyntaxModule
                         return false;
                     }
                 };
-                if(bodyIndex.Length == 2)
+                if (bodyIndex.Length == 2)
                 {
                     if (!bodyChecker(0))
                         return false;
@@ -681,17 +681,17 @@ namespace MajdataEdit.SyntaxModule
         /// <param name="endPoint"></param>
         /// <param name="flexionPoint"></param>
         /// <returns></returns>
-        static bool SlidePathCheck(string slideType,int startPoint,int endPoint,
+        static bool SlidePathCheck(string slideType, int startPoint, int endPoint,
                                    int? flexionPoint = null)
         {
             if (!PointCheck(startPoint) || !PointCheck(endPoint))
                 return false;
 
-            switch(slideType)
+            switch (slideType)
             {
                 case "^":
                 case "v":
-                    if (GetPointInterval(startPoint, endPoint) is (0 or 4))
+                    if (GetPointInterval(startPoint, endPoint) is 0 or 4)
                         return false;
                     return true;
                 case "-":
@@ -735,7 +735,7 @@ namespace MajdataEdit.SyntaxModule
 
             if (!PointCheck(point))
                 return null;
-            switch(point)
+            switch (point)
             {
                 case 8:
                     return 0;
@@ -749,7 +749,7 @@ namespace MajdataEdit.SyntaxModule
         /// <param name="point"></param>
         /// <param name="targetPoint"></param>
         /// <returns></returns>
-        static int GetPointInterval(int point,int targetPoint)
+        static int GetPointInterval(int point, int targetPoint)
         {
             int a = (int)GetPointIndex(point)!;
             int b = (int)GetPointIndex(targetPoint)!;
@@ -758,7 +758,7 @@ namespace MajdataEdit.SyntaxModule
             if (result == 0)
                 return 0;
             else
-                return Math.Min(8 - (result / 45), result / 45);
+                return Math.Min(8 - result / 45, result / 45);
 
         }
         /// <summary>
@@ -769,11 +769,11 @@ namespace MajdataEdit.SyntaxModule
         /// <returns>
         /// 目标键位的方向(顺时针,同一直线或逆时针)
         /// </returns>
-        static DirectionType? PointCompare(int point,int targetPoint)
+        static DirectionType? PointCompare(int point, int targetPoint)
         {
             if (!PointCheck(point) || !PointCheck(targetPoint))
                 return null;
-            if(point == targetPoint) return null;
+            if (point == targetPoint) return null;
 
             int a = (int)GetPointIndex(point)!;
             int b = (int)GetPointIndex(targetPoint)!;
@@ -781,7 +781,7 @@ namespace MajdataEdit.SyntaxModule
 
             if (Math.Abs(result) == 180)
                 return DirectionType.Opposite;
-            else if (result < -180 || (result > 0 && result < 180))
+            else if (result < -180 || result > 0 && result < 180)
                 return DirectionType.Anticlockwise;
             else
                 return DirectionType.Clockwise;
@@ -798,7 +798,7 @@ namespace MajdataEdit.SyntaxModule
             if (s.Length != 2)
                 return false;
 
-            return (int.TryParse(s[0], out int i) && i > 0) && (int.TryParse(s[1], out i) && i >= 0);
+            return int.TryParse(s[0], out int i) && i > 0 && int.TryParse(s[1], out i) && i >= 0;
         }
         /// <summary>
         /// 判断是否为Note
@@ -834,7 +834,7 @@ namespace MajdataEdit.SyntaxModule
             if (!PointCheck(index))//错误键位直接返回
                 return false;
 
-            if(s.Contains("$"))
+            if (s.Contains("$"))
             {
                 var f = s.IndexOf("$");
                 var l = s.LastIndexOf("$");
@@ -843,18 +843,18 @@ namespace MajdataEdit.SyntaxModule
                     s = s.Remove(1, 1);
                 else if (Math.Abs(f - l) == 1 && s[1..3] == "$$")
                     s = s.Remove(1, 2);
-                else 
+                else
                     return false;
             }
 
             if (s.Length == 1)
                 return true;
-            else if(s.Length == 2)// e.g. 28 , 2b , 2x
+            else if (s.Length == 2)// e.g. 28 , 2b , 2x
             {
-                if (s[1] is ('b' or 'x'))
+                if (s[1] is 'b' or 'x')
                     return true;
                 else
-                    return int.TryParse(s, out int i) && (PointCheck(i % 10) && PointCheck(i / 10));
+                    return int.TryParse(s, out int i) && PointCheck(i % 10) && PointCheck(i / 10);
             }
             else if (s.Length == 3)// e.g. 2bx
             {
@@ -884,7 +884,7 @@ namespace MajdataEdit.SyntaxModule
                 return false;
             if (s.Length < 2 || header.Length < 2)
                 return false;
-            else if (header is ("Ch" or "C1h" or "Chf" or "C1hf"))//TouchHold特例
+            else if (header is "Ch" or "C1h" or "Chf" or "C1hf")//TouchHold特例
                 return true;
             //Hold严格判定：第二位必须是'h'，'b'，'x'不限制位置
             //妥协一下，改为松判定
@@ -924,7 +924,7 @@ namespace MajdataEdit.SyntaxModule
         {
             int index;
             var types = SlideTypeList.Skip(2).ToArray();
-            string header = s.Split(string.Concat(types).ToCharArray())[0];            
+            string header = s.Split(string.Concat(types).ToCharArray())[0];
 
             if (!int.TryParse(s[0..1], out index))//总是检查第1位
                 return false;

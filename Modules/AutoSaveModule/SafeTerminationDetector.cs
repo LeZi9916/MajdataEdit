@@ -5,7 +5,7 @@
 
 using System.IO;
 
-namespace MajdataEdit.AutoSaveModule;
+namespace MajdataEdit.Modules.AutoSaveModule;
 
 /// <summary>
 ///     异常退出检测器

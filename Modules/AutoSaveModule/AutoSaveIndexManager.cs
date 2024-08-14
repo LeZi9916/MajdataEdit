@@ -6,7 +6,7 @@
 using System.IO;
 using Newtonsoft.Json;
 
-namespace MajdataEdit.AutoSaveModule;
+namespace MajdataEdit.Modules.AutoSaveModule;
 
 internal class AutoSaveIndexManager : IAutoSaveIndexManager
 {

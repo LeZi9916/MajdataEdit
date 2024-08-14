@@ -5,7 +5,7 @@
 
 using System.Runtime.Serialization;
 
-namespace MajdataEdit.AutoSaveModule;
+namespace MajdataEdit.Modules.AutoSaveModule;
 
 internal class AutoSaveIndexNotReadyException : Exception
 {

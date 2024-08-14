@@ -17,8 +17,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
 using System.Windows.Threading;
 using DiscordRPC;
-using MajdataEdit.AutoSaveModule;
-using MajdataEdit.SyntaxModule;
+using MajdataEdit.Modules.AutoSaveModule;
+using MajdataEdit.Modules.SyntaxModule;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -1296,9 +1296,12 @@ public partial class MainWindow : Window
 
     private bool CheckAndStartView()
     {
+        var path = "MajdataView.exe";
         if (Process.GetProcessesByName("MajdataView").Length == 0 && Process.GetProcessesByName("Unity").Length == 0)
         {
-            var viewProcess = Process.Start("MajdataView.exe");
+            if (!File.Exists(path))
+                return true;
+            var viewProcess = Process.Start(path);
             var setWindowPosTimer = new Timer(2000)
             {
                 AutoReset = false
