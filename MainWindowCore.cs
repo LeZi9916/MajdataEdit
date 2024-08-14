@@ -20,6 +20,7 @@ using DiscordRPC;
 using MajdataEdit.Modules.AutoSaveModule;
 using MajdataEdit.Modules.SyntaxModule;
 using MajdataEdit.Types;
+using MajdataEdit.Utils;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -124,13 +125,13 @@ public partial class MainWindow : Window
         //Console.WriteLine("SeekText");
         var time = Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream));
         var timingList = new List<SimaiTimingPoint>();
-        timingList.AddRange(SimaiProcess.timinglist);
-        var noteList = SimaiProcess.notelist;
-        if (SimaiProcess.timinglist.Count <= 0) return;
+        timingList.AddRange(SimaiProcessor.timinglist);
+        var noteList = SimaiProcessor.notelist;
+        if (SimaiProcessor.timinglist.Count <= 0) return;
         timingList.Sort((x, y) => Math.Abs(time - x.time).CompareTo(Math.Abs(time - y.time)));
         var theNote = timingList[0];
         timingList.Clear();
-        timingList.AddRange(SimaiProcess.timinglist);
+        timingList.AddRange(SimaiProcessor.timinglist);
         var indexOfTheNote = timingList.IndexOf(theNote);
         var pointer = FumenContent.Document.Blocks.ToList()[theNote.rawTextPositionY].ContentStart
             .GetPositionAtOffset(theNote.rawTextPositionX);
@@ -139,9 +140,9 @@ public partial class MainWindow : Window
 
     private void SeekTextFromIndex(int noteGroupIndex)
     {
-        if (SimaiProcess.notelist.Count > noteGroupIndex + 1 && noteGroupIndex >= 0)
+        if (SimaiProcessor.notelist.Count > noteGroupIndex + 1 && noteGroupIndex >= 0)
         {
-            var theNote = SimaiProcess.notelist[noteGroupIndex];
+            var theNote = SimaiProcessor.notelist[noteGroupIndex];
             var pointer = FumenContent.Document.Blocks.ToList()[theNote.rawTextPositionY].ContentStart
                 .GetPositionAtOffset(theNote.rawTextPositionX);
             FumenContent.Selection.Select(pointer, pointer);
@@ -158,10 +159,10 @@ public partial class MainWindow : Window
 
         if (Bass.BASS_ChannelIsActive(bgmStream) == BASSActive.BASS_ACTIVE_PLAYING && (bool)FollowPlayCheck.IsChecked!)
             return;
-        var time = SimaiProcess.Serialize(GetRawFumenText(), GetRawFumenPosition());
+        var time = SimaiProcessor.Serialize(GetRawFumenText(), GetRawFumenPosition());
         SetBgmPosition(time);
         //Console.WriteLine("SelectionChanged");
-        SimaiProcess.ClearNoteListPlayedState();
+        SimaiProcessor.ClearNoteListPlayedState();
         ghostCusorPositionTime = (float)time;
     }
 
@@ -305,20 +306,20 @@ public partial class MainWindow : Window
         var info = Bass.BASS_ChannelGetInfo(bgmStream);
         if (info.freq != 44100) MessageBox.Show(GetLocalizedString("Warn44100Hz"), GetLocalizedString("Attention"));
         ReadWaveFromFile();
-        SimaiProcess.ClearData();
+        SimaiProcessor.ClearData();
 
-        if (!SimaiProcess.ReadData(dataPath)) return;
+        if (!SimaiProcessor.ReadData(dataPath)) return;
 
 
         LevelSelector.SelectedItem = LevelSelector.Items[0];
         ReadSetting();
-        SetRawFumenText(SimaiProcess.fumens[selectedDifficulty]);
+        SetRawFumenText(SimaiProcessor.fumens[selectedDifficulty]);
         SeekTextFromTime();
-        SimaiProcess.Serialize(GetRawFumenText());
+        SimaiProcessor.Serialize(GetRawFumenText());
         FumenContent.Focus();
         DrawWave();
 
-        OffsetTextBox.Text = SimaiProcess.first.ToString();
+        OffsetTextBox.Text = SimaiProcessor.first.ToString();
 
         Cover.Visibility = Visibility.Collapsed;
         MenuEdit.IsEnabled = true;
@@ -398,13 +399,13 @@ public partial class MainWindow : Window
         {
             isSaved = true;
             LevelSelector.IsEnabled = true;
-            TheWindow.Title = GetWindowsTitleString(SimaiProcess.title!);
+            TheWindow.Title = GetWindowsTitleString(SimaiProcessor.title!);
         }
         else
         {
             isSaved = false;
             LevelSelector.IsEnabled = false;
-            TheWindow.Title = GetWindowsTitleString(GetLocalizedString("Unsaved") + SimaiProcess.title!);
+            TheWindow.Title = GetWindowsTitleString(GetLocalizedString("Unsaved") + SimaiProcessor.title!);
             AutoSaveManager.Of().SetFileChanged();
         }
     }
@@ -430,8 +431,8 @@ public partial class MainWindow : Window
     private void SaveFumen(bool writeToDisk = false)
     {
         if (selectedDifficulty == -1) return;
-        SimaiProcess.fumens[selectedDifficulty] = GetRawFumenText();
-        SimaiProcess.first = float.Parse(OffsetTextBox.Text);
+        SimaiProcessor.fumens[selectedDifficulty] = GetRawFumenText();
+        SimaiProcessor.first = float.Parse(OffsetTextBox.Text);
         if (MaidataDir == "")
         {
             var saveDialog = new SaveFileDialog
@@ -442,11 +443,11 @@ public partial class MainWindow : Window
             if ((bool)saveDialog.ShowDialog()!) MaidataDir = new FileInfo(saveDialog.FileName).DirectoryName!;
         }
 
-        SimaiProcess.SaveData(MaidataDir + "/maidata.bak.txt");
+        SimaiProcessor.SaveData(MaidataDir + "/maidata.bak.txt");
         SaveSetting();
         if (writeToDisk)
         {
-            SimaiProcess.SaveData(MaidataDir + "/maidata.txt");
+            SimaiProcessor.SaveData(MaidataDir + "/maidata.txt");
             SetSavedState(true);
         }
     }
@@ -602,7 +603,7 @@ public partial class MainWindow : Window
         Dispatcher.Invoke(
             delegate
             {
-                SimaiProcess.Serialize(GetRawFumenText(), GetRawFumenPosition());
+                SimaiProcessor.Serialize(GetRawFumenText(), GetRawFumenPosition());
                 DrawWave();
             }
         );
@@ -717,7 +718,7 @@ public partial class MainWindow : Window
             var bpmChangeValues = new List<float>();
             bpmChangeTimes.Clear();
             bpmChangeValues.Clear();
-            foreach (var timing in SimaiProcess.timinglist)
+            foreach (var timing in SimaiProcessor.timinglist)
                 if (timing.currentBpm != lastbpm)
                 {
                     bpmChangeTimes.Add(timing.time);
@@ -727,7 +728,7 @@ public partial class MainWindow : Window
 
             bpmChangeTimes.Add(Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetLength(bgmStream)));
 
-            double time = SimaiProcess.first;
+            double time = SimaiProcessor.first;
             var signature = 4; //预留拍号
             var currentBeat = 1;
             var timePerBeat = 0d;
@@ -768,7 +769,7 @@ public partial class MainWindow : Window
 
             //Draw timing lines
             pen = new Pen(Color.White, 1);
-            foreach (var note in SimaiProcess.timinglist)
+            foreach (var note in SimaiProcessor.timinglist)
             {
                 if (note == null) break;
                 if (note.time - currentTime > deltatime) continue;
@@ -777,7 +778,7 @@ public partial class MainWindow : Window
             }
 
             //Draw notes                    
-            foreach (var note in SimaiProcess.notelist)
+            foreach (var note in SimaiProcessor.notelist)
             {
                 if (note == null) break;
                 if (note.time - currentTime > deltatime) continue;
@@ -962,7 +963,7 @@ public partial class MainWindow : Window
         delta = delta * deltatime / (Width / 2);
         var time = Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream));
         SetBgmPosition(time + delta);
-        SimaiProcess.ClearNoteListPlayedState();
+        SimaiProcessor.ClearNoteListPlayedState();
         SeekTextFromTime();
         Task.Run(() => DrawWave());
     }
@@ -998,7 +999,7 @@ public partial class MainWindow : Window
         isPlaying = true;
         isPlan2Stop = false;
         PlayAndPauseButton.Content = "  ▌▌ ";
-        var CusorTime = SimaiProcess.Serialize(GetRawFumenText(), GetRawFumenPosition()); //scan first
+        var CusorTime = SimaiProcessor.Serialize(GetRawFumenText(), GetRawFumenPosition()); //scan first
 
         //TODO: Moeying改一下你的generateSoundEffect然后把下面这行删了
         var isOpIncluded = playMethod == PlayMethod.Normal ? false : true;
@@ -1043,7 +1044,7 @@ public partial class MainWindow : Window
                 {
                     playStartTime =
                         Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream));
-                    SimaiProcess.ClearNoteListPlayedState();
+                    SimaiProcessor.ClearNoteListPlayedState();
                     StartSELoop();
                     //soundEffectTimer.Start();
                     waveStopMonitorTimer.Start();
@@ -1054,7 +1055,7 @@ public partial class MainWindow : Window
             case PlayMethod.Normal:
                 playStartTime = Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream));
                 await GenerateSoundEffectList(playStartTime, isOpIncluded);
-                SimaiProcess.ClearNoteListPlayedState();
+                SimaiProcessor.ClearNoteListPlayedState();
                 StartSELoop();
                 //soundEffectTimer.Start();
                 waveStopMonitorTimer.Start();
@@ -1505,13 +1506,13 @@ public partial class MainWindow : Window
     {
         try
         {
-            var details = "Editing: " + SimaiProcess.title;
+            var details = "Editing: " + SimaiProcessor.title;
             if (details.Length > 50)
                 details = details[..50];
             DCRPCclient.SetPresence(new RichPresence
             {
                 Details = details,
-                State = "With note count of " + SimaiProcess.notelist.Count,
+                State = "With note count of " + SimaiProcessor.notelist.Count,
                 Assets = new Assets
                 {
                     LargeImageKey = "salt",

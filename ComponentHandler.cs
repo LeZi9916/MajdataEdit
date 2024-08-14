@@ -1,5 +1,6 @@
 ﻿using MajdataEdit.Modules.SyntaxModule;
 using MajdataEdit.Types;
+using MajdataEdit.Utils;
 using Microsoft.Win32;
 using System.Diagnostics;
 using System.IO;
@@ -29,11 +30,11 @@ public partial class MainWindow : Window
     private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         var i = LevelSelector.SelectedIndex;
-        SetRawFumenText(SimaiProcess.fumens[i]);
+        SetRawFumenText(SimaiProcessor.fumens[i]);
         selectedDifficulty = i;
-        LevelTextBox.Text = SimaiProcess.levels[selectedDifficulty];
+        LevelTextBox.Text = SimaiProcessor.levels[selectedDifficulty];
         SetSavedState(true);
-        SimaiProcess.Serialize(GetRawFumenText());
+        SimaiProcessor.Serialize(GetRawFumenText());
         DrawWave();
         SyntaxCheck();
     }
@@ -42,7 +43,7 @@ public partial class MainWindow : Window
     {
         SetSavedState(false);
         if (selectedDifficulty == -1) return;
-        SimaiProcess.levels[selectedDifficulty] = LevelTextBox.Text;
+        SimaiProcessor.levels[selectedDifficulty] = LevelTextBox.Text;
     }
 
     private void OffsetTextBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -50,13 +51,13 @@ public partial class MainWindow : Window
         SetSavedState(false);
         try
         {
-            SimaiProcess.first = float.Parse(OffsetTextBox.Text);
-            SimaiProcess.Serialize(GetRawFumenText());
+            SimaiProcessor.first = float.Parse(OffsetTextBox.Text);
+            SimaiProcessor.Serialize(GetRawFumenText());
             DrawWave();
         }
         catch
         {
-            SimaiProcess.first = 0f;
+            SimaiProcessor.first = 0f;
         }
     }
 
@@ -177,7 +178,7 @@ public partial class MainWindow : Window
         var infoWindow = new Infomation();
         SetSavedState(false);
         infoWindow.ShowDialog();
-        TheWindow.Title = GetWindowsTitleString(SimaiProcess.title!);
+        TheWindow.Title = GetWindowsTitleString(SimaiProcessor.title!);
     }
 
     private void MenuItem_Majnet_Click(object? sender, RoutedEventArgs e)

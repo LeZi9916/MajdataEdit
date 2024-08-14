@@ -1,4 +1,6 @@
-﻿namespace MajdataEdit.Types;
+﻿using MajdataEdit.Utils;
+
+namespace MajdataEdit.Types;
 
 internal class Majson
 {

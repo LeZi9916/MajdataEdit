@@ -58,3 +58,22 @@ public enum ResponseCode
     Error
 }
 
+enum SoundDataType
+{
+    None,
+    Answer,
+    Judge,
+    JudgeBreak,
+    JudgeEX,
+    Break,
+    Hanabi,
+    TouchHold,
+    Slide,
+    Touch,
+    AllPerfect,
+    FullComboFanfare,
+    Clock,
+    BreakSlideStart,
+    BreakSlide,
+    JudgeBreakSlide
+}

@@ -16,6 +16,7 @@ using Timer = System.Timers.Timer;
 using MajdataEdit.Modules.SyntaxModule;
 using MajdataEdit.Modules.AutoSaveModule;
 using MajdataEdit.Types;
+using MajdataEdit.Utils;
 
 namespace MajdataEdit;
 
@@ -191,7 +192,7 @@ public partial class MainWindow : Window
         if (Bass.BASS_ChannelIsActive(bgmStream) == BASSActive.BASS_ACTIVE_PLAYING && (bool)FollowPlayCheck.IsChecked!)
             return;
         //TODO:这个应该换成用fumen text position来在已经serialized的timinglist里面找。。 然后直接去掉这个double的返回和position的入参。。。
-        var time = SimaiProcess.Serialize(GetRawFumenText(), GetRawFumenPosition());
+        var time = SimaiProcessor.Serialize(GetRawFumenText(), GetRawFumenPosition());
 
         //按住Ctrl，同时按下鼠标左键/上下左右方向键时，才改变进度，其他包含Ctrl的组合键不影响进度。
         if (Keyboard.Modifiers == ModifierKeys.Control && (
@@ -208,7 +209,7 @@ public partial class MainWindow : Window
         }
 
         //Console.WriteLine("SelectionChanged");
-        SimaiProcess.ClearNoteListPlayedState();
+        SimaiProcessor.ClearNoteListPlayedState();
         ghostCusorPositionTime = (float)time;
         if (!isPlaying) DrawWave();
     }
@@ -219,7 +220,7 @@ public partial class MainWindow : Window
         SetSavedState(false);
         if (chartChangeTimer.Interval < 33)
         {
-            SimaiProcess.Serialize(GetRawFumenText(), GetRawFumenPosition());
+            SimaiProcessor.Serialize(GetRawFumenText(), GetRawFumenPosition());
             DrawWave();
         }
         else

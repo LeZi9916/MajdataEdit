@@ -1,6 +1,7 @@
 ﻿
 using System.Windows.Media.Animation;
 using System.Windows.Navigation;
+using MajdataEdit.Utils;
 
 namespace MajdataEdit.Modules.SyntaxModule
 {
@@ -114,7 +115,7 @@ namespace MajdataEdit.Modules.SyntaxModule
         /// </summary>
         internal static void Scan()
         {
-            var noteList = SimaiProcess.notelist;
+            var noteList = SimaiProcessor.notelist;
 
             foreach (var note in noteList)
             {

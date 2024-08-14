@@ -3,6 +3,8 @@
   See LICENSE in the project root for license information.
 */
 
+using MajdataEdit.Utils;
+
 namespace MajdataEdit.Modules.AutoSaveModule;
 
 /// <summary>
@@ -25,7 +27,7 @@ public class GlobalAutoSave : IAutoSave
     {
         var newSaveFilePath = indexManager.GetNewAutoSaveFileName();
 
-        SimaiProcess.SaveData(newSaveFilePath);
+        SimaiProcessor.SaveData(newSaveFilePath);
 
         indexManager.RefreshIndex();
 

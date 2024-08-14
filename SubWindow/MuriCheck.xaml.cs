@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using MajdataEdit.Utils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -143,7 +144,7 @@ public partial class MuriCheck : Window
 
         var opSequence = new List<MaimaiOperationMultNote>();
 
-        foreach (var noteGroup in SimaiProcess.notelist)
+        foreach (var noteGroup in SimaiProcessor.notelist)
         {
             var baseTime = noteGroup.time;
             var positionX = noteGroup.rawTextPositionX;
@@ -293,7 +294,7 @@ public partial class MuriCheck : Window
 
         var opSequence = new List<MaimaiOperationSlide>();
 
-        foreach (var noteGroup in SimaiProcess.notelist)
+        foreach (var noteGroup in SimaiProcessor.notelist)
         {
             var baseTime = noteGroup.time;
             var positionX = noteGroup.rawTextPositionX;

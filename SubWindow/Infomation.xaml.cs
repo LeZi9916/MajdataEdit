@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using MajdataEdit.Utils;
 using Microsoft.Win32;
 
 namespace MajdataEdit;
@@ -19,19 +20,19 @@ public partial class Infomation : Window
 
     private void OKButton_Click(object sender, RoutedEventArgs e)
     {
-        SimaiProcess.title = TitleTextbox.Text;
-        SimaiProcess.artist = ArtistTextbox.Text;
-        SimaiProcess.designer = DesignTextbox.Text;
-        SimaiProcess.other_commands = OtherTextbox.Text;
+        SimaiProcessor.title = TitleTextbox.Text;
+        SimaiProcessor.artist = ArtistTextbox.Text;
+        SimaiProcessor.designer = DesignTextbox.Text;
+        SimaiProcessor.other_commands = OtherTextbox.Text;
         Close();
     }
 
     private void InfomationWindow_Loaded(object sender, RoutedEventArgs e)
     {
-        TitleTextbox.Text = SimaiProcess.title;
-        ArtistTextbox.Text = SimaiProcess.artist;
-        DesignTextbox.Text = SimaiProcess.designer;
-        OtherTextbox.Text = SimaiProcess.other_commands;
+        TitleTextbox.Text = SimaiProcessor.title;
+        ArtistTextbox.Text = SimaiProcessor.artist;
+        DesignTextbox.Text = SimaiProcessor.designer;
+        OtherTextbox.Text = SimaiProcessor.other_commands;
         LoadImageFromDefault();
         RenderOptions.SetBitmapScalingMode(SaltImage, BitmapScalingMode.HighQuality);
     }

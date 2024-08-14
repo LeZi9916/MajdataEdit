@@ -2,9 +2,9 @@
 using System.Text;
 using System.Windows;
 
-namespace MajdataEdit;
+namespace MajdataEdit.Utils;
 
-internal static class SimaiProcess
+internal static class SimaiProcessor
 {
     public static string? title;
     public static string? artist;
@@ -173,7 +173,7 @@ internal static class SimaiProcess
 
                 if (i - 1 < position) requestedTime = time;
                 if (text[i] == '(')
-                    //Get bpm
+                //Get bpm
                 {
                     haveNote = false;
                     noteTemp = "";
@@ -193,7 +193,7 @@ internal static class SimaiProcess
                 }
 
                 if (text[i] == '{')
-                    //Get beats
+                //Get beats
                 {
                     haveNote = false;
                     noteTemp = "";
@@ -213,7 +213,7 @@ internal static class SimaiProcess
                 }
 
                 if (text[i] == 'H')
-                    //Get HS
+                //Get HS
                 {
                     haveNote = false;
                     noteTemp = "";

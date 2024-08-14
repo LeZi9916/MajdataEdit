@@ -4,6 +4,8 @@
 */
 
 
+using MajdataEdit.Utils;
+
 namespace MajdataEdit.Modules.AutoSaveModule;
 
 /// <summary>
@@ -28,7 +30,7 @@ public class LocalAutoSave : IAutoSave
 
         var newSaveFilePath = indexManager.GetNewAutoSaveFileName();
 
-        SimaiProcess.SaveData(newSaveFilePath);
+        SimaiProcessor.SaveData(newSaveFilePath);
 
         indexManager.RefreshIndex();
 
