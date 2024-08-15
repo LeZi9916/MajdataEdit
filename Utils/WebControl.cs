@@ -67,6 +67,7 @@ internal static class WebControl
         try
         {
             using var client = new HttpClient();
+            client.Timeout = new TimeSpan(0, 0, 1);
             string json = await Serializer.Json.SerializeAsync(req);
 
             var webRequest = new HttpRequestMessage(HttpMethod.Post, url)

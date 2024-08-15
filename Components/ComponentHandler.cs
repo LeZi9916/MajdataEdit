@@ -15,19 +15,19 @@ public partial class MainWindow : Window
     #region Left
     private async void PlayAndPauseButton_Click(object sender, RoutedEventArgs e)
     {
-        PlayAndPauseButton.IsEnabled = false;
-        StopButton.IsEnabled = false;
+        SetControlButtonActive(false);
         await TogglePlayAndPause();
-        PlayAndPauseButton.IsEnabled = true;
-        StopButton.IsEnabled = true;
+        SetControlButtonActive(true);
     }
 
-    private void StopButton_Click(object sender, RoutedEventArgs e)
+    private async void StopButton_Click(object sender, RoutedEventArgs e)
     {
-        ToggleStop();
+        SetControlButtonActive(false);
+        await ToggleStop();
+        SetControlButtonActive(true);
     }
 
-    private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private async void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         var i = LevelSelector.SelectedIndex;
         SetRawFumenText(SimaiProcessor.fumens[i]);
@@ -35,7 +35,7 @@ public partial class MainWindow : Window
         LevelTextBox.Text = SimaiProcessor.levels[selectedDifficulty];
         SetSavedState(true);
         SimaiProcessor.Serialize(GetRawFumenText());
-        DrawWave();
+        await DrawWave();
         SyntaxCheck();
     }
 
@@ -46,14 +46,14 @@ public partial class MainWindow : Window
         SimaiProcessor.levels[selectedDifficulty] = LevelTextBox.Text;
     }
 
-    private void OffsetTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    private async void OffsetTextBox_TextChanged(object sender, TextChangedEventArgs e)
     {
         SetSavedState(false);
         try
         {
             SimaiProcessor.first = float.Parse(OffsetTextBox.Text);
             SimaiProcessor.Serialize(GetRawFumenText());
-            DrawWave();
+            await DrawWave();
         }
         catch
         {
@@ -73,9 +73,11 @@ public partial class MainWindow : Window
         FumenContent.Focus();
     }
 
-    private void Op_Button_Click(object sender, RoutedEventArgs e)
+    private async void Op_Button_Click(object sender, RoutedEventArgs e)
     {
-        TogglePlayAndStop(PlayMethod.Op);
+        SetControlButtonActive(false);
+        await TogglePlayAndStop(PlayMethod.Op);
+        SetControlButtonActive(true);
     }
 
     private void SettingLabel_MouseUp(object sender, MouseButtonEventArgs e)
@@ -131,9 +133,11 @@ public partial class MainWindow : Window
     {
     }
 
-    private void Menu_ExportRender_Click(object sender, RoutedEventArgs e)
+    private async void Menu_ExportRender_Click(object sender, RoutedEventArgs e)
     {
-        TogglePlayAndPause(PlayMethod.Record);
+        SetControlButtonActive(false);
+        await TogglePlayAndPause(PlayMethod.Record);
+        SetControlButtonActive(true);
     }
 
     private void MirrorLeftRight_MenuItem_Click(object? sender, RoutedEventArgs e)

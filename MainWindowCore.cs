@@ -78,7 +78,7 @@ public partial class MainWindow : Window
 
 
     //*UI DRAWING
-    readonly Timer visualEffectRefreshTimer = new(1);
+    readonly Timer visualEffectRefreshTimer = new(16.6667);
 
     WriteableBitmap? WaveBitmap;
 
@@ -246,7 +246,7 @@ public partial class MainWindow : Window
     }
 
     //*FILE CONTROL
-    private void initFromFile(string path) //file name should not be included in path
+    private async Task initFromFile(string path) //file name should not be included in path
     {
         if (soundSetting != null) soundSetting.Close();
         if (editorSetting == null) ReadEditorSetting();
@@ -317,7 +317,7 @@ public partial class MainWindow : Window
         SeekTextFromTime();
         SimaiProcessor.Serialize(GetRawFumenText());
         FumenContent.Focus();
-        DrawWave();
+        await DrawWave();
 
         OffsetTextBox.Text = SimaiProcessor.first.ToString();
 
@@ -582,12 +582,12 @@ public partial class MainWindow : Window
     }
 
     // This update very freqently to Draw FFT wave.
-    private void VisualEffectRefreshTimer_Elapsed(object? sender, ElapsedEventArgs e)
+    private async void VisualEffectRefreshTimer_Elapsed(object? sender, ElapsedEventArgs e)
     {
         try
         {
-            DrawFFT();
-            DrawWave();
+            await DrawFFT();
+            await DrawWave();
         }
         catch (Exception ex)
         {
@@ -596,22 +596,20 @@ public partial class MainWindow : Window
     }
 
     // 谱面变更延迟解析
-    private void ChartChangeTimer_Elapsed(object? sender, ElapsedEventArgs e)
+    private async void ChartChangeTimer_Elapsed(object? sender, ElapsedEventArgs e)
     {
         Console.WriteLine("TextChanged");
         SyntaxCheck();
-        Dispatcher.Invoke(
-            delegate
-            {
-                SimaiProcessor.Serialize(GetRawFumenText(), GetRawFumenPosition());
-                DrawWave();
-            }
-        );
+        await Dispatcher.InvokeAsync(async () => 
+        {
+            SimaiProcessor.Serialize(GetRawFumenText(), GetRawFumenPosition());
+            await DrawWave();
+        });
     }
 
-    private void DrawFFT()
+    private async Task DrawFFT()
     {
-        Dispatcher.InvokeAsync(() =>
+        await Dispatcher.InvokeAsync(() =>
         {
             //Scroll WaveView
             var currentTime = Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream));
@@ -661,12 +659,12 @@ public partial class MainWindow : Window
         MusicWave.Source = WaveBitmap;
     }
 
-    private void DrawWave()
+    private async Task DrawWave()
     {
         if (isDrawing) return;
         if (WaveBitmap == null) return;
 
-        Dispatcher.Invoke(() =>
+        await Dispatcher.InvokeAsync(() =>
         {
             isDrawing = true;
             var width = WaveBitmap.PixelWidth;
@@ -956,16 +954,16 @@ public partial class MainWindow : Window
         Dispatcher.Invoke(() => { TimeLabel.Content = string.Format("{0}:{1:00}", minute, second); });
     }
 
-    private void ScrollWave(double delta)
+    private async Task ScrollWave(double delta)
     {
         if (Bass.BASS_ChannelIsActive(bgmStream) == BASSActive.BASS_ACTIVE_PLAYING)
-            TogglePause();
+            await TogglePause();
         delta = delta * deltatime / (Width / 2);
         var time = Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream));
         SetBgmPosition(time + delta);
         SimaiProcessor.ClearNoteListPlayedState();
         SeekTextFromTime();
-        Task.Run(() => DrawWave());
+        await DrawWave();
     }
 
     public static string GetLocalizedString(string key, string resourceFileName = "Langs", bool addSpaceAfter = false)

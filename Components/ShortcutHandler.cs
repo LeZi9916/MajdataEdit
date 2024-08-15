@@ -9,29 +9,42 @@ using Timer = System.Timers.Timer;
 namespace MajdataEdit;
 public partial class MainWindow : Window
 {
-    private void PlayAndPause_CanExecute(object? sender, CanExecuteRoutedEventArgs e) //快捷键
+    void SetControlButtonActive(bool isEnable)
     {
-        TogglePlayAndStop();
+        Dispatcher.Invoke(() =>
+        {
+            PlayAndPauseButton.IsEnabled = isEnable;
+            StopButton.IsEnabled = isEnable;
+            Op_Button.IsEnabled = isEnable;
+        });
     }
-
+    private async void PlayAndPause_CanExecute(object? sender, CanExecuteRoutedEventArgs e) //快捷键
+    {
+        SetControlButtonActive(false);
+        await TogglePlayAndStop();
+        SetControlButtonActive(true);
+    }
     private async void StopPlaying_CanExecute(object? sender, CanExecuteRoutedEventArgs e) //快捷键
     {
-        PlayAndPauseButton.IsEnabled = false;
-        StopButton.IsEnabled = false;
+        SetControlButtonActive(false);
         await TogglePlayAndPause();
-        PlayAndPauseButton.IsEnabled = true;
-        StopButton.IsEnabled = true;
+        SetControlButtonActive(true);
     }
-
     private void SaveFile_Command_CanExecute(object? sender, CanExecuteRoutedEventArgs e)
     {
         SaveFumen(true);
         SystemSounds.Beep.Play();
     }
-
-    private void SendToView_CanExecute(object? sender, CanExecuteRoutedEventArgs e)
+    /// <summary>
+    /// 录制预览
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    private async void SendToView_CanExecute(object? sender, CanExecuteRoutedEventArgs e)
     {
-        TogglePlayAndStop(PlayMethod.Op);
+        SetControlButtonActive(false);
+        await TogglePlayAndStop(PlayMethod.Op);
+        SetControlButtonActive(true);
     }
     /// <summary>
     /// 加快播放速度

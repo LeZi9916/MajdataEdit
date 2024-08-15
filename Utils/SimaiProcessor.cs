@@ -316,14 +316,14 @@ internal static class SimaiProcessor
 
 internal class SimaiTimingPoint
 {
-    public float currentBpm = -1;
-    public bool havePlayed;
-    public float HSpeed = 1f;
-    public List<SimaiNote> noteList = new(); //only used for json serialize
-    public string notesContent;
-    public int rawTextPositionX;
-    public int rawTextPositionY;
-    public double time;
+    public float currentBpm { get; set; } = -1;
+    public bool havePlayed { get; set; }
+    public float HSpeed { get; set; } = 1f;
+    public List<SimaiNote> noteList { get; set; } = new(); //only used for json serialize
+    public string notesContent { get; set; }
+    public int rawTextPositionX { get; set; }
+    public int rawTextPositionY { get; set; }
+    public double time { get; set; }
 
     public SimaiTimingPoint(double _time, int textposX = 0, int textposY = 0, string _content = "", float bpm = 0f,
         float _hspeed = 1f)
@@ -651,21 +651,21 @@ internal enum SimaiNoteType
 
 internal class SimaiNote
 {
-    public double holdTime;
-    public bool isBreak;
-    public bool isEx;
-    public bool isFakeRotate;
-    public bool isForceStar;
-    public bool isHanabi;
-    public bool isSlideBreak;
-    public bool isSlideNoHead;
+    public double holdTime { get; set; }
+    public bool isBreak { get; set; }
+    public bool isEx { get; set; }
+    public bool isFakeRotate { get; set; }
+    public bool isForceStar { get; set; }
+    public bool isHanabi { get; set; }
+    public bool isSlideBreak { get; set; }
+    public bool isSlideNoHead { get; set; }
 
-    public string? noteContent; //used for star explain
-    public SimaiNoteType noteType;
+    public string? noteContent { get; set; } //used for star explain
+    public SimaiNoteType noteType { get; set; }
 
-    public double slideStartTime;
-    public double slideTime;
+    public double slideStartTime { get; set; }
+    public double slideTime { get; set; }
 
-    public int startPosition = 1; //键位（1-8）
-    public char touchArea = ' ';
+    public int startPosition { get; set; } = 1; //键位（1-8）
+    public char touchArea { get; set; } = ' ';
 }

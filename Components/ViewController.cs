@@ -24,11 +24,11 @@ public partial class MainWindow : Window
         waveStopMonitorTimer.Stop();
         visualEffectRefreshTimer.Stop();
         await RequestToPause();
-        DrawWave();
+        await DrawWave();
     }
     private async ValueTask TogglePlay(PlayMethod playMethod = PlayMethod.Normal)
     {
-        if (!Op_Button.IsEnabled) return;
+        //if (!Op_Button.IsEnabled) return;
 
         if (EditorState == EditorControlMethod.Start || playMethod != PlayMethod.Normal)
             if (!await RequestToStop())
@@ -116,7 +116,7 @@ public partial class MainWindow : Window
         }
 
         ghostCusorPositionTime = (float)CusorTime;
-        DrawWave();
+        await DrawWave();
     }
     private async ValueTask ToggleStop()
     {
@@ -133,7 +133,7 @@ public partial class MainWindow : Window
         visualEffectRefreshTimer.Stop();
         await RequestToStop();
         Bass.BASS_ChannelSetPosition(bgmStream, playStartTime);
-        DrawWave();
+        await DrawWave();
     }
     private async ValueTask TogglePlayAndPause(PlayMethod playMethod = PlayMethod.Normal)
     {
@@ -275,7 +275,7 @@ public partial class MainWindow : Window
             EditorPlayMethod = editorSetting.editorPlayMethod
         };
 
-        var response = WebControl.RequestPost("http://localhost:8013/", req);
+        var response = await WebControl.RequestPostAsync("http://localhost:8013/", req);
         if (!response.IsSuccess)
         {
             MessageBox.Show(GetLocalizedString("PortClear"));

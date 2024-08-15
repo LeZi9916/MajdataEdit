@@ -67,7 +67,7 @@ public partial class MainWindow : Window
             await CheckUpdate(true);
             CheckUpdateButton.IsEnabled = true;
         }
-
+        ViewMonitor.Init();
         #region 异常退出处理
 
         if (!SafeTerminationDetector.Of().IsLastTerminationSafe())
@@ -184,7 +184,7 @@ public partial class MainWindow : Window
 
     #region RichTextbox events
 
-    private void FumenContent_SelectionChanged(object sender, RoutedEventArgs e)
+    private async void FumenContent_SelectionChanged(object sender, RoutedEventArgs e)
     {
         NoteNowText.Content = "" + (
             new TextRange(FumenContent.Document.ContentStart, FumenContent.CaretPosition).Text.Replace("\r", "")
@@ -204,24 +204,24 @@ public partial class MainWindow : Window
             ))
         {
             if (Bass.BASS_ChannelIsActive(bgmStream) == BASSActive.BASS_ACTIVE_PLAYING)
-                TogglePause();
+                await TogglePause();
             SetBgmPosition(time);
         }
 
         //Console.WriteLine("SelectionChanged");
         SimaiProcessor.ClearNoteListPlayedState();
         ghostCusorPositionTime = (float)time;
-        if (!isPlaying) DrawWave();
+        if (!isPlaying) await DrawWave();
     }
 
-    private void FumenContent_TextChanged(object sender, TextChangedEventArgs e)
+    private async void FumenContent_TextChanged(object sender, TextChangedEventArgs e)
     {
         if (GetRawFumenText() == "" || isLoading) return;
         SetSavedState(false);
         if (chartChangeTimer.Interval < 33)
         {
             SimaiProcessor.Serialize(GetRawFumenText(), GetRawFumenPosition());
-            DrawWave();
+            await DrawWave();
         }
         else
         {
@@ -244,25 +244,25 @@ public partial class MainWindow : Window
 
     #region Wave displayer
 
-    private void WaveViewZoomIn_Click(object sender, RoutedEventArgs e)
+    private async void WaveViewZoomIn_Click(object sender, RoutedEventArgs e)
     {
         if (deltatime > 1)
             deltatime -= 1;
-        DrawWave();
+        await DrawWave();
         FumenContent.Focus();
     }
 
-    private void WaveViewZoomOut_Click(object sender, RoutedEventArgs e)
+    private async void WaveViewZoomOut_Click(object sender, RoutedEventArgs e)
     {
         if (deltatime < 10)
             deltatime += 1;
-        DrawWave();
+        await DrawWave();
         FumenContent.Focus();
     }
 
-    private void MusicWave_MouseWheel(object sender, MouseWheelEventArgs e)
+    private async void MusicWave_MouseWheel(object sender, MouseWheelEventArgs e)
     {
-        ScrollWave(-e.Delta);
+        await ScrollWave(-e.Delta);
     }
 
     private void MusicWave_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -270,22 +270,22 @@ public partial class MainWindow : Window
         lastMousePointX = e.GetPosition(this).X;
     }
 
-    private void MusicWave_MouseMove(object sender, MouseEventArgs e)
+    private async void MusicWave_MouseMove(object sender, MouseEventArgs e)
     {
         if (e.LeftButton == MouseButtonState.Pressed)
         {
             var delta = e.GetPosition(this).X - lastMousePointX;
             lastMousePointX = e.GetPosition(this).X;
-            ScrollWave(-delta);
+            await ScrollWave(-delta);
         }
 
         lastMousePointX = e.GetPosition(this).X;
     }
 
-    private void MusicWave_SizeChanged(object sender, SizeChangedEventArgs e)
+    private async void MusicWave_SizeChanged(object sender, SizeChangedEventArgs e)
     {
         InitWave();
-        DrawWave();
+        await DrawWave();
     }
 
 
