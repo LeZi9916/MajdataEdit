@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
@@ -32,6 +33,7 @@ using WPFLocalizeExtension.Extensions;
 using Brush = System.Drawing.Brush;
 using Color = System.Drawing.Color;
 using DashStyle = System.Drawing.Drawing2D.DashStyle;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 using LinearGradientBrush = System.Drawing.Drawing2D.LinearGradientBrush;
 using Pen = System.Drawing.Pen;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
@@ -123,7 +125,7 @@ public partial class MainWindow : Window
     private void SeekTextFromTime()
     {
         //Console.WriteLine("SeekText");
-        var time = Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream));
+        var time = AudioManager.GetSeconds(ChannelType.BGM);
         var timingList = new List<SimaiTimingPoint>();
         timingList.AddRange(SimaiProcessor.timinglist);
         var noteList = SimaiProcessor.notelist;
@@ -156,8 +158,8 @@ public partial class MainWindow : Window
         FumenContent.Focus();
         FumenContent.Selection.Select(pointer, pointer);
         Focus();
-
-        if (Bass.BASS_ChannelIsActive(bgmStream) == BASSActive.BASS_ACTIVE_PLAYING && (bool)FollowPlayCheck.IsChecked!)
+        
+        if (AudioManager.ChannelIsPlaying(ChannelType.BGM) && (bool)FollowPlayCheck.IsChecked!)
             return;
         var time = SimaiProcessor.Serialize(GetRawFumenText(), GetRawFumenPosition());
         SetBgmPosition(time);
@@ -270,49 +272,22 @@ public partial class MainWindow : Window
         MaidataDir = path;
         SafeTerminationDetector.Of().ChangePath(MaidataDir);
         SetRawFumenText("");
-        if (bgmStream != -1024)
-        {
-            Bass.BASS_ChannelStop(bgmStream);
-            Bass.BASS_StreamFree(bgmStream);
-        }
+        if (!AudioManager.IsInvaildChannel(ChannelType.BGM))
+            AudioManager.DisposalChannel(ChannelType.BGM);
 
-        //soundSetting.Close();
-        var decodeStream = Bass.BASS_StreamCreateFile(audioPath, 0L, 0L, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_STREAM_PRESCAN);
-        bgmStream = BassFx.BASS_FX_TempoCreate(decodeStream, BASSFlag.BASS_FX_FREESOURCE);
-        //Bass.BASS_StreamCreateFile(audioPath, 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
 
-        Bass.BASS_ChannelSetAttribute(bgmStream, BASSAttribute.BASS_ATTRIB_VOL, editorSetting!.Default_BGM_Level);
-        Bass.BASS_ChannelSetAttribute(trackStartStream, BASSAttribute.BASS_ATTRIB_VOL, editorSetting!.Default_BGM_Level);
-        Bass.BASS_ChannelSetAttribute(allperfectStream, BASSAttribute.BASS_ATTRIB_VOL, editorSetting!.Default_BGM_Level);
-        Bass.BASS_ChannelSetAttribute(fanfareStream, BASSAttribute.BASS_ATTRIB_VOL, editorSetting!.Default_BGM_Level);
-        Bass.BASS_ChannelSetAttribute(clockStream, BASSAttribute.BASS_ATTRIB_VOL, editorSetting!.Default_BGM_Level);
-        Bass.BASS_ChannelSetAttribute(answerStream, BASSAttribute.BASS_ATTRIB_VOL, editorSetting!.Default_Answer_Level);
-        Bass.BASS_ChannelSetAttribute(judgeStream, BASSAttribute.BASS_ATTRIB_VOL, editorSetting!.Default_Judge_Level);
-        Bass.BASS_ChannelSetAttribute(judgeBreakStream, BASSAttribute.BASS_ATTRIB_VOL,
-            editorSetting!.Default_Break_Level);
-        Bass.BASS_ChannelSetAttribute(judgeBreakSlideStream, BASSAttribute.BASS_ATTRIB_VOL,
-            editorSetting!.Default_Break_Slide_Level);
-        Bass.BASS_ChannelSetAttribute(slideStream, BASSAttribute.BASS_ATTRIB_VOL, editorSetting!.Default_Slide_Level);
-        Bass.BASS_ChannelSetAttribute(breakSlideStartStream, BASSAttribute.BASS_ATTRIB_VOL,
-            editorSetting!.Default_Slide_Level);
-        Bass.BASS_ChannelSetAttribute(breakStream, BASSAttribute.BASS_ATTRIB_VOL, editorSetting!.Default_Break_Level);
-        Bass.BASS_ChannelSetAttribute(breakSlideStream, BASSAttribute.BASS_ATTRIB_VOL,
-            editorSetting!.Default_Break_Slide_Level);
-        Bass.BASS_ChannelSetAttribute(judgeExStream, BASSAttribute.BASS_ATTRIB_VOL, editorSetting!.Default_Ex_Level);
-        Bass.BASS_ChannelSetAttribute(touchStream, BASSAttribute.BASS_ATTRIB_VOL, editorSetting!.Default_Touch_Level);
-        Bass.BASS_ChannelSetAttribute(hanabiStream, BASSAttribute.BASS_ATTRIB_VOL, editorSetting!.Default_Hanabi_Level);
-        Bass.BASS_ChannelSetAttribute(holdRiserStream, BASSAttribute.BASS_ATTRIB_VOL,
-            editorSetting!.Default_Hanabi_Level);
-        var info = Bass.BASS_ChannelGetInfo(bgmStream);
-        if (info.freq != 44100) MessageBox.Show(GetLocalizedString("Warn44100Hz"), GetLocalizedString("Attention"));
+        var info = AudioManager.LoadBGM(audioPath);
+        if (info?.freq != 44100) 
+            MessageBox.Show(GetLocalizedString("Warn44100Hz"), GetLocalizedString("Attention"));
         ReadWaveFromFile();
         SimaiProcessor.ClearData();
 
-        if (!SimaiProcessor.ReadData(dataPath)) return;
+        if (!SimaiProcessor.ReadData(dataPath)) 
+            return;
 
 
         LevelSelector.SelectedItem = LevelSelector.Items[0];
-        ReadSetting();
+        await ReadSetting();
         SetRawFumenText(SimaiProcessor.fumens[selectedDifficulty]);
         SeekTextFromTime();
         SimaiProcessor.Serialize(GetRawFumenText());
@@ -452,54 +427,38 @@ public partial class MainWindow : Window
         }
     }
 
-    private void SaveSetting()
+    private async Task SaveSetting()
     {
-        if (MaidataDir == "") return;
+        if (MaidataDir == "") 
+            return;
+
+        var path = Path.Combine(MaidataDir, majSettingFilename);
         var setting = new MajSetting
         {
-            lastEditDiff = selectedDifficulty,
-            lastEditTime = Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream))
+            LastEditDiff = selectedDifficulty,
+            LastEditTime = AudioManager.GetSeconds(ChannelType.BGM)
         };
-        Bass.BASS_ChannelGetAttribute(bgmStream, BASSAttribute.BASS_ATTRIB_VOL, ref setting.BGM_Level);
-        Bass.BASS_ChannelGetAttribute(answerStream, BASSAttribute.BASS_ATTRIB_VOL, ref setting.Answer_Level);
-        Bass.BASS_ChannelGetAttribute(judgeStream, BASSAttribute.BASS_ATTRIB_VOL, ref setting.Judge_Level);
-        Bass.BASS_ChannelGetAttribute(judgeBreakStream, BASSAttribute.BASS_ATTRIB_VOL, ref setting.Break_Level);
-        Bass.BASS_ChannelGetAttribute(breakSlideStream, BASSAttribute.BASS_ATTRIB_VOL, ref setting.Break_Slide_Level);
-        Bass.BASS_ChannelGetAttribute(judgeExStream, BASSAttribute.BASS_ATTRIB_VOL, ref setting.Ex_Level);
-        Bass.BASS_ChannelGetAttribute(touchStream, BASSAttribute.BASS_ATTRIB_VOL, ref setting.Touch_Level);
-        Bass.BASS_ChannelGetAttribute(slideStream, BASSAttribute.BASS_ATTRIB_VOL, ref setting.Slide_Level);
-        Bass.BASS_ChannelGetAttribute(hanabiStream, BASSAttribute.BASS_ATTRIB_VOL, ref setting.Hanabi_Level);
-        var json = JsonConvert.SerializeObject(setting);
-        File.WriteAllText(MaidataDir + "/" + majSettingFilename, json);
+        AudioManager.SaveSetting(setting);
+        using var stream = File.Create(path);
+        await JsonSerializer.SerializeAsync(stream, setting);
     }
 
-    private void ReadSetting()
+    private async Task ReadSetting()
     {
-        var path = MaidataDir + "/" + majSettingFilename;
-        if (!File.Exists(path)) return;
-        var setting = JsonConvert.DeserializeObject<MajSetting>(File.ReadAllText(path));
-        LevelSelector.SelectedIndex = setting!.lastEditDiff;
-        selectedDifficulty = setting.lastEditDiff;
-        SetBgmPosition(setting.lastEditTime);
-        Bass.BASS_ChannelSetAttribute(bgmStream, BASSAttribute.BASS_ATTRIB_VOL, setting.BGM_Level);
-        Bass.BASS_ChannelSetAttribute(trackStartStream, BASSAttribute.BASS_ATTRIB_VOL, setting.BGM_Level);
-        Bass.BASS_ChannelSetAttribute(allperfectStream, BASSAttribute.BASS_ATTRIB_VOL, setting.BGM_Level);
-        Bass.BASS_ChannelSetAttribute(fanfareStream, BASSAttribute.BASS_ATTRIB_VOL, setting.BGM_Level);
-        Bass.BASS_ChannelSetAttribute(clockStream, BASSAttribute.BASS_ATTRIB_VOL, setting.BGM_Level);
-        Bass.BASS_ChannelSetAttribute(answerStream, BASSAttribute.BASS_ATTRIB_VOL, setting.Answer_Level);
-        Bass.BASS_ChannelSetAttribute(judgeStream, BASSAttribute.BASS_ATTRIB_VOL, setting.Judge_Level);
-        Bass.BASS_ChannelSetAttribute(judgeBreakStream, BASSAttribute.BASS_ATTRIB_VOL, setting.Break_Level);
-        Bass.BASS_ChannelSetAttribute(judgeBreakSlideStream, BASSAttribute.BASS_ATTRIB_VOL, setting.Break_Slide_Level);
-        Bass.BASS_ChannelSetAttribute(slideStream, BASSAttribute.BASS_ATTRIB_VOL, setting.Slide_Level);
-        Bass.BASS_ChannelSetAttribute(breakSlideStartStream, BASSAttribute.BASS_ATTRIB_VOL, setting.Slide_Level);
-        Bass.BASS_ChannelSetAttribute(breakStream, BASSAttribute.BASS_ATTRIB_VOL, setting.Break_Level);
-        Bass.BASS_ChannelSetAttribute(breakSlideStream, BASSAttribute.BASS_ATTRIB_VOL, setting.Break_Slide_Level);
-        Bass.BASS_ChannelSetAttribute(judgeExStream, BASSAttribute.BASS_ATTRIB_VOL, setting.Ex_Level);
-        Bass.BASS_ChannelSetAttribute(touchStream, BASSAttribute.BASS_ATTRIB_VOL, setting.Touch_Level);
-        Bass.BASS_ChannelSetAttribute(hanabiStream, BASSAttribute.BASS_ATTRIB_VOL, setting.Hanabi_Level);
-        Bass.BASS_ChannelSetAttribute(holdRiserStream, BASSAttribute.BASS_ATTRIB_VOL, setting.Hanabi_Level);
+        var path = Path.Combine(MaidataDir, majSettingFilename);
+        if (!File.Exists(path)) 
+            return;
 
-        SaveSetting(); // 覆盖旧版本setting
+        using var stream = File.OpenRead(path);
+        var setting = await JsonSerializer.DeserializeAsync<MajSetting>(stream);
+
+        LevelSelector.SelectedIndex = setting!.LastEditDiff;
+        selectedDifficulty = setting.LastEditDiff;
+        SetBgmPosition(setting.LastEditTime);
+
+        AudioManager.ReadSetting(setting);
+
+        await SaveSetting(); // 覆盖旧版本setting
     }
 
     private void CreateNewFumen(string path)
@@ -519,7 +478,7 @@ public partial class MainWindow : Window
         editorSetting = new EditorSetting
         {
             RenderMode =
-            RenderOptions.ProcessRenderMode == RenderMode.SoftwareOnly ? 1 : 0 // 使用命令行指定强制软件渲染时，同步修改配置值
+            RenderOptions.ProcessRenderMode == RenderMode.SoftwareOnly ? RenderType.SW : RenderType.HW // 使用命令行指定强制软件渲染时，同步修改配置值
         };
 
         File.WriteAllText(editorSettingFilename, JsonConvert.SerializeObject(editorSetting, Formatting.Indented));
@@ -543,7 +502,7 @@ public partial class MainWindow : Window
                 editorSetting.RenderMode == 0 ? RenderMode.Default : RenderMode.SoftwareOnly;
         else
             //如果通过命令行指定了使用软件渲染模式，则覆盖设置项
-            editorSetting.RenderMode = 1;
+            editorSetting.RenderMode = RenderType.SW;
 
         LocalizeDictionary.Instance.Culture = new CultureInfo(editorSetting.Language);
         AddGesture(editorSetting.PlayPauseKey, "PlayAndPause");
@@ -561,8 +520,8 @@ public partial class MainWindow : Window
         FumenContent.FontSize = editorSetting.FontSize;
 
         ViewerCover.Content = editorSetting.backgroundCover.ToString();
-        ViewerSpeed.Content = editorSetting.playSpeed.ToString("F1"); // 转化为形如"7.0", "9.5"这样的速度
-        ViewerTouchSpeed.Content = editorSetting.touchSpeed.ToString("F1");
+        ViewerSpeed.Content = editorSetting.NoteSpeed.ToString("F1"); // 转化为形如"7.0", "9.5"这样的速度
+        ViewerTouchSpeed.Content = editorSetting.TouchSpeed.ToString("F1");
 
         chartChangeTimer.Interval = editorSetting.ChartRefreshDelay; // 设置更新延迟
 
@@ -612,7 +571,7 @@ public partial class MainWindow : Window
         await Dispatcher.InvokeAsync(() =>
         {
             //Scroll WaveView
-            var currentTime = Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream));
+            var currentTime = AudioManager.GetSeconds(ChannelType.BGM);
             //MusicWave.Margin = new Thickness(-currentTime / sampleTime * zoominPower, Margin.Left, MusicWave.Margin.Right, Margin.Bottom);
             //MusicWaveCusor.Margin = new Thickness(-currentTime / sampleTime * zoominPower, Margin.Left, MusicWave.Margin.Right, Margin.Bottom);
 
@@ -626,7 +585,7 @@ public partial class MainWindow : Window
             graphics.Clear(Color.Transparent);
 
             var fft = new float[1024];
-            Bass.BASS_ChannelGetData(bgmStream, fft, (int)BASSData.BASS_DATA_FFT1024);
+            AudioManager.GetChannelData(ChannelType.BGM,ref fft, (int)BASSData.BASS_DATA_FFT1024);
             var points = new PointF[1024];
             for (var i = 0; i < fft.Length; i++)
                 points[i] = new PointF((float)Math.Log10(i + 1) * 100f, 240 - fft[i] * 256); //semilog
@@ -682,7 +641,7 @@ public partial class MainWindow : Window
             var backBitmap = new Bitmap(width, height, WaveBitmap.BackBufferStride,
                 PixelFormat.Format32bppArgb, WaveBitmap.BackBuffer);
             var graphics = Graphics.FromImage(backBitmap);
-            var currentTime = Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream));
+            var currentTime = AudioManager.GetSeconds(ChannelType.BGM);
 
             graphics.Clear(Color.FromArgb(100, 0, 0, 0));
 
@@ -724,7 +683,7 @@ public partial class MainWindow : Window
                     lastbpm = timing.currentBpm;
                 }
 
-            bpmChangeTimes.Add(Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetLength(bgmStream)));
+            bpmChangeTimes.Add(AudioManager.GetSeconds(ChannelType.BGM));
 
             double time = SimaiProcessor.first;
             var signature = 4; //预留拍号
@@ -948,7 +907,7 @@ public partial class MainWindow : Window
 
     private void UpdateTimeDisplay()
     {
-        var currentPlayTime = Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream));
+        var currentPlayTime = AudioManager.GetSeconds(ChannelType.BGM);
         var minute = (int)currentPlayTime / 60;
         double second = (int)(currentPlayTime - 60 * minute);
         Dispatcher.Invoke(() => { TimeLabel.Content = string.Format("{0}:{1:00}", minute, second); });
@@ -956,10 +915,10 @@ public partial class MainWindow : Window
 
     private async Task ScrollWave(double delta)
     {
-        if (Bass.BASS_ChannelIsActive(bgmStream) == BASSActive.BASS_ACTIVE_PLAYING)
+        if (AudioManager.ChannelIsPlaying(ChannelType.BGM))
             await TogglePause();
         delta = delta * deltatime / (Width / 2);
-        var time = Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream));
+        var time = AudioManager.GetSeconds(ChannelType.BGM);
         SetBgmPosition(time + delta);
         SimaiProcessor.ClearNoteListPlayedState();
         SeekTextFromTime();
@@ -989,20 +948,21 @@ public partial class MainWindow : Window
     private void SetPlaybackSpeed(float speed)
     {
         var scale = (speed - 1) * 100f;
-        Bass.BASS_ChannelSetAttribute(bgmStream, BASSAttribute.BASS_ATTRIB_TEMPO, scale);
+        AudioManager.SetPlaybackSpeed(ChannelType.BGM, scale);
     }
 
     private float GetPlaybackSpeed()
     {
         var speed = 0f;
-        Bass.BASS_ChannelGetAttribute(bgmStream, BASSAttribute.BASS_ATTRIB_TEMPO, ref speed);
+        AudioManager.GetPlaybackSpeed(ChannelType.BGM, ref speed);
         return speed / 100f + 1f;
     }
 
-    private void SetBgmPosition(double time)
+    private async Task SetBgmPosition(double time)
     {
-        if (EditorState == EditorControlMethod.Pause) RequestToStop();
-        Bass.BASS_ChannelSetPosition(bgmStream, time);
+        if (EditorState == EditorControlMethod.Pause) 
+            await RequestToStop();
+        AudioManager.SetSeconds(ChannelType.BGM, time);
     }
 
 

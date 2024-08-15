@@ -1,4 +1,5 @@
 ﻿using MajdataEdit.Types;
+using MajdataEdit.Utils;
 using System.Media;
 using System.Timers;
 using System.Windows;
@@ -53,7 +54,8 @@ public partial class MainWindow : Window
     /// <param name="e"></param>
     private void IncreasePlaybackSpeed_CanExecute(object? sender, CanExecuteRoutedEventArgs e)
     {
-        if (Bass.BASS_ChannelIsActive(bgmStream) == BASSActive.BASS_ACTIVE_PLAYING) return;
+        if (AudioManager.ChannelIsPlaying(ChannelType.BGM)) 
+            return;
         var speed = GetPlaybackSpeed();
         Console.WriteLine(speed);
         speed += 0.25f;
@@ -70,7 +72,8 @@ public partial class MainWindow : Window
     /// <param name="e"></param>
     private void DecreasePlaybackSpeed_CanExecute(object? sender, CanExecuteRoutedEventArgs e)
     {
-        if (Bass.BASS_ChannelIsActive(bgmStream) == BASSActive.BASS_ACTIVE_PLAYING) return;
+        if (AudioManager.ChannelIsPlaying(ChannelType.BGM)) 
+            return;
         var speed = GetPlaybackSpeed();
         Console.WriteLine(speed);
         speed -= 0.25f;

@@ -77,3 +77,29 @@ enum SoundDataType
     BreakSlide,
     JudgeBreakSlide
 }
+
+public enum ChannelType
+{
+    APSFX,
+    Answer,
+    BGM,
+    BreakSlideStart,
+    BreakSlideEnd,
+    Break,
+    Clock,
+    Fanfare,
+    Hanabi,
+    HoldRiser,
+    BreakSlideJudge,
+    BreakJudge,
+    ExJudge,
+    TapJudge,
+    Slide,
+    Touch,
+    TrackStart
+}
+public enum RenderType
+{
+    HW,
+    SW
+}

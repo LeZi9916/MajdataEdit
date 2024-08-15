@@ -18,9 +18,10 @@ public partial class MainWindow : Window
 
         FumenContent.Focus();
         PlayAndPauseButton.Content = "▶";
-        Bass.BASS_ChannelStop(bgmStream);
-        Bass.BASS_ChannelStop(holdRiserStream);
-        //soundEffectTimer.Stop();
+
+        AudioManager.Pause(ChannelType.BGM);
+        AudioManager.Pause(ChannelType.HoldRiser);
+
         waveStopMonitorTimer.Stop();
         visualEffectRefreshTimer.Stop();
         await RequestToPause();
@@ -50,33 +51,24 @@ public partial class MainWindow : Window
         switch (playMethod)
         {
             case PlayMethod.Record:
-                Bass.BASS_ChannelSetPosition(bgmStream, 0);
+                AudioManager.SetPosition(ChannelType.BGM,0);
+
                 startAt = DateTime.Now.AddSeconds(5d);
                 //TODO: i18n
                 MessageBox.Show(GetLocalizedString("AskRender"), GetLocalizedString("Attention"));
                 InternalSwitchWindow(false);
+
                 await GenerateSoundEffectList(0.0, isOpIncluded);
-                var task = new Task(() => RenderSoundEffect(5d));
-                try
-                {
-                    task.Start();
-                    task.Wait();
-                }
-                catch (AggregateException)
-                {
-                    MessageBox.Show(task.Exception!.InnerException!.Message + "\n" +
-                                    task.Exception.InnerException.StackTrace);
-                    return;
-                }
+                await Task.Run(() => RenderSoundEffect(5d));
 
                 if (!await RequestToRun(startAt, playMethod)) return;
                 break;
             case PlayMethod.Op:
                 await GenerateSoundEffectList(0.0, isOpIncluded);
                 InternalSwitchWindow(false);
-                Bass.BASS_ChannelSetPosition(bgmStream, 0);
+                AudioManager.SetPosition(ChannelType.BGM, 0);
                 startAt = DateTime.Now.AddSeconds(5d);
-                Bass.BASS_ChannelPlay(trackStartStream, true);
+                AudioManager.Play(ChannelType.TrackStart, true);
 
                 if (!await RequestToRun(startAt, playMethod)) return;
                 while (DateTime.Now.Ticks < startAt.Ticks)
@@ -84,18 +76,17 @@ public partial class MainWindow : Window
                         return;
                 Dispatcher.Invoke(() =>
                 {
-                    playStartTime =
-                        Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream));
+                    playStartTime = AudioManager.GetSeconds(ChannelType.BGM);
                     SimaiProcessor.ClearNoteListPlayedState();
                     StartSELoop();
-                    //soundEffectTimer.Start();
+
                     waveStopMonitorTimer.Start();
                     visualEffectRefreshTimer.Start();
-                    Bass.BASS_ChannelPlay(bgmStream, false);
+                    AudioManager.Play(ChannelType.BGM, false);
                 });
                 break;
             case PlayMethod.Normal:
-                playStartTime = Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream));
+                playStartTime = AudioManager.GetSeconds(ChannelType.BGM);
                 await GenerateSoundEffectList(playStartTime, isOpIncluded);
                 SimaiProcessor.ClearNoteListPlayedState();
                 StartSELoop();
@@ -103,7 +94,7 @@ public partial class MainWindow : Window
                 waveStopMonitorTimer.Start();
                 visualEffectRefreshTimer.Start();
                 startAt = DateTime.Now;
-                Bass.BASS_ChannelPlay(bgmStream, false);
+                AudioManager.Play(ChannelType.BGM, false);
                 if (EditorState == EditorControlMethod.Pause)
                 {
                     if (!await RequestToContinue(startAt)) return;
@@ -126,13 +117,13 @@ public partial class MainWindow : Window
 
         FumenContent.Focus();
         PlayAndPauseButton.Content = "▶";
-        Bass.BASS_ChannelStop(bgmStream);
-        Bass.BASS_ChannelStop(holdRiserStream);
-        //soundEffectTimer.Stop();
+        AudioManager.Stop(ChannelType.BGM);
+        AudioManager.Stop(ChannelType.HoldRiser);
+
         waveStopMonitorTimer.Stop();
         visualEffectRefreshTimer.Stop();
         await RequestToStop();
-        Bass.BASS_ChannelSetPosition(bgmStream, playStartTime);
+        AudioManager.SetSeconds(ChannelType.BGM, playStartTime);
         await DrawWave();
     }
     private async ValueTask TogglePlayAndPause(PlayMethod playMethod = PlayMethod.Normal)
@@ -219,7 +210,7 @@ public partial class MainWindow : Window
         {
             Control = EditorControlMethod.Continue,
             StartAt = StartAt.Ticks,
-            StartTime = (float)Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream)),
+            StartTime = (float)AudioManager.GetSeconds(ChannelType.BGM),
             AudioSpeed = GetPlaybackSpeed(),
             EditorPlayMethod = editorSetting!.editorPlayMethod
         };
@@ -255,7 +246,7 @@ public partial class MainWindow : Window
 
         Dispatcher.Invoke(() =>
         {
-            startTime = (float)Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream));
+            startTime = (float)AudioManager.GetSeconds(ChannelType.BGM);
             // request.playSpeed = float.Parse(ViewerSpeed.Text);
             // 将maimaiDX速度换算为View中的单位速度 MajSpeed = 107.25 / (71.4184491 * (MaiSpeed + 0.9975) ^ -0.985558604)
         });
@@ -266,8 +257,8 @@ public partial class MainWindow : Window
             JsonPath = path,
             StartAt = StartAt.Ticks,
             StartTime = startTime,
-            NoteSpeed = editorSetting!.playSpeed,
-            TouchSpeed = editorSetting!.touchSpeed,
+            NoteSpeed = editorSetting!.NoteSpeed,
+            TouchSpeed = editorSetting!.TouchSpeed,
             BackgroundCover = editorSetting!.backgroundCover,
             ComboStatusType = editorSetting!.comboStatusType,
             AudioSpeed = GetPlaybackSpeed(),

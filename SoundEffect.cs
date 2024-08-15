@@ -4,38 +4,18 @@ using System.Text;
 using System.Timers;
 using MajdataEdit.Utils;
 using MajdataEdit.Types;
-using Un4seen.Bass;
 using Timer = System.Timers.Timer;
 
 namespace MajdataEdit;
 
 public partial class MainWindow
 {
-    private readonly Timer waveStopMonitorTimer = new(33);
-    public int allperfectStream = -114514;
-    public int answerStream = -114514;
+    readonly Timer waveStopMonitorTimer = new(33);
 
-    public int bgmStream = -114514;
-    public int breakSlideStartStream = -114514; // break-slide启动音效
-    public int breakSlideStream = -114514; // break-slide欢呼声（critical perfect音效）
-    public int breakStream = -114514; // 这个才是欢呼声
-    public int clockStream = -114514;
-    private double extraTime4AllPerfect; // 需要在播放完后等待All Perfect特效的秒数
-    public int fanfareStream = -114514;
-    public int hanabiStream = -114514;
-    public int holdRiserStream = -114514;
-    private bool isPlan2Stop; // 已准备停止 当all perfect无法在播放完BGM前结束时需要此功能
-
-    private bool isPlaying; // 为了解决播放到结束时自动停止
-    public int judgeBreakSlideStream = -114514; // break-slide判定音效
-    public int judgeBreakStream = -114514; // 这个是break的判定音效 不是欢呼声
-    public int judgeExStream = -114514;
-    public int judgeStream = -114514;
-
-    private double playStartTime;
-    public int slideStream = -114514;
-    public int touchStream = -114514;
-    public int trackStartStream = -114514;
+    double extraTime4AllPerfect; // 需要在播放完后等待All Perfect特效的秒数
+    bool isPlan2Stop;            // 已准备停止 当all perfect无法在播放完BGM前结束时需要此功能
+    bool isPlaying;              // 为了解决播放到结束时自动停止
+    double playStartTime;
 
     private List<SoundEffectTiming>? waitToBePlayed { get; set; }
     //private Stopwatch sw = new Stopwatch();
@@ -44,29 +24,6 @@ public partial class MainWindow
     private void WaveStopMonitorTimer_Elapsed(object? sender, ElapsedEventArgs e)
     {
         WaveStopMonitorUpdate();
-    }
-
-    private void ReadSoundEffect()
-    {
-        var path = Environment.CurrentDirectory + "/SFX/";
-        answerStream = Bass.BASS_StreamCreateFile(path + "answer.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        judgeStream = Bass.BASS_StreamCreateFile(path + "judge.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        judgeBreakStream = Bass.BASS_StreamCreateFile(path + "judge_break.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        judgeExStream = Bass.BASS_StreamCreateFile(path + "judge_ex.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        breakStream = Bass.BASS_StreamCreateFile(path + "break.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        hanabiStream = Bass.BASS_StreamCreateFile(path + "hanabi.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        holdRiserStream = Bass.BASS_StreamCreateFile(path + "touchHold_riser.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        trackStartStream = Bass.BASS_StreamCreateFile(path + "track_start.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        slideStream = Bass.BASS_StreamCreateFile(path + "slide.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        touchStream = Bass.BASS_StreamCreateFile(path + "touch.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        allperfectStream = Bass.BASS_StreamCreateFile(path + "all_perfect.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        fanfareStream = Bass.BASS_StreamCreateFile(path + "fanfare.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        clockStream = Bass.BASS_StreamCreateFile(path + "clock.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        breakSlideStartStream =
-            Bass.BASS_StreamCreateFile(path + "break_slide_start.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        breakSlideStream = Bass.BASS_StreamCreateFile(path + "break_slide.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        judgeBreakSlideStream =
-            Bass.BASS_StreamCreateFile(path + "judge_break_slide.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
     }
 
     [DllImport("winmm")]
@@ -80,7 +37,7 @@ public partial class MainWindow
         var thread = new Thread(() =>
         {
             timeBeginPeriod(1);
-            var lasttime = Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream));
+            var lasttime = AudioManager.GetSeconds(ChannelType.BGM);
             while (isPlaying)
             {
                 //sw.Reset();
@@ -104,7 +61,7 @@ public partial class MainWindow
     {
         try
         {
-            var currentTime = Bass.BASS_ChannelBytes2Seconds(bgmStream, Bass.BASS_ChannelGetPosition(bgmStream));
+            var currentTime = AudioManager.GetSeconds(ChannelType.BGM);
             //var waitToBePlayed = SimaiProcess.notelist.FindAll(o => o.havePlayed == false && o.time > currentTime);
             if (waitToBePlayed!.Count < 1) return;
             var nearestTime = waitToBePlayed[0].time;
@@ -114,27 +71,27 @@ public partial class MainWindow
                 var se = waitToBePlayed[0];
                 waitToBePlayed.RemoveAt(0);
 
-                if (se.hasAnswer) Bass.BASS_ChannelPlay(answerStream, true);
-                if (se.hasJudge) Bass.BASS_ChannelPlay(judgeStream, true);
-                if (se.hasJudgeBreak) Bass.BASS_ChannelPlay(judgeBreakStream, true);
-                if (se.hasJudgeEx) Bass.BASS_ChannelPlay(judgeExStream, true);
-                if (se.hasBreak) Bass.BASS_ChannelPlay(breakStream, true);
-                if (se.hasTouch) Bass.BASS_ChannelPlay(touchStream, true);
+                if (se.hasAnswer) AudioManager.Play(ChannelType.Answer,true);
+                if (se.hasJudge) AudioManager.Play(ChannelType.TapJudge, true);
+                if (se.hasJudgeBreak) AudioManager.Play(ChannelType.BreakJudge, true);
+                if (se.hasJudgeEx) AudioManager.Play(ChannelType.ExJudge, true);
+                if (se.hasBreak) AudioManager.Play(ChannelType.Break, true);
+                if (se.hasTouch) AudioManager.Play(ChannelType.Touch, true);
                 if (se.hasHanabi) //may cause delay
-                    Bass.BASS_ChannelPlay(hanabiStream, true);
-                if (se.hasTouchHold) Bass.BASS_ChannelPlay(holdRiserStream, true);
-                if (se.hasTouchHoldEnd) Bass.BASS_ChannelStop(holdRiserStream);
-                if (se.hasSlide) Bass.BASS_ChannelPlay(slideStream, true);
-                if (se.hasBreakSlideStart) Bass.BASS_ChannelPlay(breakSlideStartStream, true);
-                if (se.hasBreakSlide) Bass.BASS_ChannelPlay(breakSlideStream, true);
-                if (se.hasJudgeBreakSlide) Bass.BASS_ChannelPlay(judgeBreakSlideStream, true);
+                    AudioManager.Play(ChannelType.Hanabi, true);
+                if (se.hasTouchHold) AudioManager.Play(ChannelType.HoldRiser, true);
+                if (se.hasTouchHoldEnd) AudioManager.Stop(ChannelType.HoldRiser);
+                if (se.hasSlide) AudioManager.Play(ChannelType.Slide, true);
+                if (se.hasBreakSlideStart) AudioManager.Play(ChannelType.BreakSlideStart, true);
+                if (se.hasBreakSlide) AudioManager.Play(ChannelType.BreakSlideEnd, true);
+                if (se.hasJudgeBreakSlide) AudioManager.Play(ChannelType.BreakSlideJudge, true);
                 if (se.hasAllPerfect)
                 {
-                    Bass.BASS_ChannelPlay(allperfectStream, true);
-                    Bass.BASS_ChannelPlay(fanfareStream, true);
+                    AudioManager.Play(ChannelType.APSFX, true);
+                    AudioManager.Play(ChannelType.Fanfare, true);
                 }
 
-                if (se.hasClock) Bass.BASS_ChannelPlay(clockStream, true);
+                if (se.hasClock) AudioManager.Play(ChannelType.Clock, true);
                 //
                 Dispatcher.Invoke(() =>
                 {
@@ -381,6 +338,11 @@ public partial class MainWindow
         });
     }
 
+    /// <summary>
+    /// 录制模式预生成wav波形音频文件
+    /// </summary>
+    /// <param name="delaySeconds"></param>
+    /// <exception cref="Exception"></exception>
     private void RenderSoundEffect(double delaySeconds)
     {
         //TODO: 改为异步并增加提示窗口
@@ -575,24 +537,15 @@ public partial class MainWindow
 
         //获取原来实时播放时候的音量
 
-        float bgmVol = 1f,
-            answerVol = 1f,
-            judgeVol = 1f,
-            judgeExVol = 1f,
-            hanabiVol = 1f,
-            touchVol = 1f,
-            slideVol = 1f,
-            breakVol = 1f,
-            breakSlideVol = 1f;
-        Bass.BASS_ChannelGetAttribute(bgmStream, BASSAttribute.BASS_ATTRIB_VOL, ref bgmVol);
-        Bass.BASS_ChannelGetAttribute(answerStream, BASSAttribute.BASS_ATTRIB_VOL, ref answerVol);
-        Bass.BASS_ChannelGetAttribute(judgeStream, BASSAttribute.BASS_ATTRIB_VOL, ref judgeVol);
-        Bass.BASS_ChannelGetAttribute(breakStream, BASSAttribute.BASS_ATTRIB_VOL, ref breakVol);
-        Bass.BASS_ChannelGetAttribute(breakSlideStream, BASSAttribute.BASS_ATTRIB_VOL, ref breakSlideVol);
-        Bass.BASS_ChannelGetAttribute(slideStream, BASSAttribute.BASS_ATTRIB_VOL, ref slideVol);
-        Bass.BASS_ChannelGetAttribute(judgeExStream, BASSAttribute.BASS_ATTRIB_VOL, ref judgeExVol);
-        Bass.BASS_ChannelGetAttribute(touchStream, BASSAttribute.BASS_ATTRIB_VOL, ref touchVol);
-        Bass.BASS_ChannelGetAttribute(hanabiStream, BASSAttribute.BASS_ATTRIB_VOL, ref hanabiVol);
+        float bgmVol = AudioManager.GetVolume(ChannelType.BGM),
+            answerVol = AudioManager.GetVolume(ChannelType.Answer),
+            judgeVol = AudioManager.GetVolume(ChannelType.TapJudge),
+            judgeExVol = AudioManager.GetVolume(ChannelType.ExJudge),
+            hanabiVol = AudioManager.GetVolume(ChannelType.Hanabi),
+            touchVol = AudioManager.GetVolume(ChannelType.Touch),
+            slideVol = AudioManager.GetVolume(ChannelType.Slide),
+            breakVol = AudioManager.GetVolume(ChannelType.Break),
+            breakSlideVol = AudioManager.GetVolume(ChannelType.BreakSlideEnd);
 
         var filedata = new List<byte>();
         var delayEmpty = new short[(int)(delaySeconds * freq * 2)];
@@ -728,7 +681,7 @@ public partial class MainWindow
         // 监控是否应当停止
         if (!isPlan2Stop &&
             isPlaying &&
-            Bass.BASS_ChannelIsActive(bgmStream) == BASSActive.BASS_ACTIVE_STOPPED)
+            AudioManager.ChannelIsStopped(ChannelType.BGM))
         {
             isPlan2Stop = true;
             if (extraTime4AllPerfect < 0)

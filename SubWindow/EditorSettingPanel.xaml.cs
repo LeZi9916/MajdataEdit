@@ -46,11 +46,11 @@ public partial class EditorSettingPanel : Window
 
         LanguageComboBox.SelectedIndex = boxIndex;
 
-        RenderModeComboBox.SelectedIndex = window.editorSetting.RenderMode;
+        RenderModeComboBox.SelectedIndex = (int)window.editorSetting.RenderMode;
 
         ViewerCover.Text = window.editorSetting.backgroundCover.ToString();
-        ViewerSpeed.Text = window.editorSetting.playSpeed.ToString("F1"); // 转化为形如"7.0", "9.5"这样的速度
-        ViewerTouchSpeed.Text = window.editorSetting.touchSpeed.ToString("F1");
+        ViewerSpeed.Text = window.editorSetting.NoteSpeed.ToString("F1"); // 转化为形如"7.0", "9.5"这样的速度
+        ViewerTouchSpeed.Text = window.editorSetting.TouchSpeed.ToString("F1");
         ComboDisplay.SelectedIndex = Array.IndexOf(
             Enum.GetValues(window.editorSetting.comboStatusType.GetType()),
             window.editorSetting.comboStatusType
@@ -108,10 +108,10 @@ public partial class EditorSettingPanel : Window
     {
         var window = (MainWindow)Owner;
         window.editorSetting!.Language = langList[LanguageComboBox.SelectedIndex];
-        window.editorSetting!.RenderMode = RenderModeComboBox.SelectedIndex;
+        window.editorSetting!.RenderMode = (RenderType)RenderModeComboBox.SelectedIndex;
         window.editorSetting!.backgroundCover = float.Parse(ViewerCover.Text);
-        window.editorSetting!.playSpeed = float.Parse(ViewerSpeed.Text);
-        window.editorSetting!.touchSpeed = float.Parse(ViewerTouchSpeed.Text);
+        window.editorSetting!.NoteSpeed = float.Parse(ViewerSpeed.Text);
+        window.editorSetting!.TouchSpeed = float.Parse(ViewerTouchSpeed.Text);
         window.editorSetting!.ChartRefreshDelay = int.Parse(ChartRefreshDelay.Text);
         window.editorSetting!.AutoCheckUpdate = (bool) AutoUpdate.IsChecked!;
         window.editorSetting!.SmoothSlideAnime = (bool) SmoothSlideAnime.IsChecked!;
@@ -124,8 +124,8 @@ public partial class EditorSettingPanel : Window
         window.SaveEditorSetting();
 
         window.ViewerCover.Content = window.editorSetting.backgroundCover.ToString();
-        window.ViewerSpeed.Content = window.editorSetting.playSpeed.ToString("F1"); // 转化为形如"7.0", "9.5"这样的速度
-        window.ViewerTouchSpeed.Content = window.editorSetting.touchSpeed.ToString("F1");
+        window.ViewerSpeed.Content = window.editorSetting.NoteSpeed.ToString("F1"); // 转化为形如"7.0", "9.5"这样的速度
+        window.ViewerTouchSpeed.Content = window.editorSetting.TouchSpeed.ToString("F1");
         window.chartChangeTimer.Interval = window.editorSetting.ChartRefreshDelay;
 
 

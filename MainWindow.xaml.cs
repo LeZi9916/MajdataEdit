@@ -50,7 +50,7 @@ public partial class MainWindow : Window
         Bass.BASS_Init(-1, 44100, BASSInit.BASS_DEVICE_CPSPEAKERS, handle);
         InitWave();
 
-        ReadSoundEffect();
+        AudioManager.Init();
         ReadEditorSetting();
 
         chartChangeTimer.Elapsed += ChartChangeTimer_Elapsed;
@@ -133,20 +133,9 @@ public partial class MainWindow : Window
         soundSetting.Close();
         //if (bpmtap != null) { bpmtap.Close(); }
         //if (muriCheck != null) { muriCheck.Close(); }
-        SaveSetting();
+        SaveSetting().Wait();
 
-        Bass.BASS_ChannelStop(bgmStream);
-        Bass.BASS_StreamFree(bgmStream);
-        Bass.BASS_ChannelStop(answerStream);
-        Bass.BASS_StreamFree(answerStream);
-        Bass.BASS_ChannelStop(breakStream);
-        Bass.BASS_StreamFree(breakStream);
-        Bass.BASS_ChannelStop(judgeExStream);
-        Bass.BASS_StreamFree(judgeExStream);
-        Bass.BASS_ChannelStop(hanabiStream);
-        Bass.BASS_StreamFree(hanabiStream);
-        Bass.BASS_Stop();
-        Bass.BASS_Free();
+        AudioManager.Disposal();
 
         // 正常退出
         SafeTerminationDetector.Of().RecordProgramClose();
@@ -189,7 +178,7 @@ public partial class MainWindow : Window
         NoteNowText.Content = "" + (
             new TextRange(FumenContent.Document.ContentStart, FumenContent.CaretPosition).Text.Replace("\r", "")
                 .Count(o => o == '\n') + 1) + " 行";
-        if (Bass.BASS_ChannelIsActive(bgmStream) == BASSActive.BASS_ACTIVE_PLAYING && (bool)FollowPlayCheck.IsChecked!)
+        if (AudioManager.ChannelIsPlaying(ChannelType.BGM) && (bool)FollowPlayCheck.IsChecked!)
             return;
         //TODO:这个应该换成用fumen text position来在已经serialized的timinglist里面找。。 然后直接去掉这个double的返回和position的入参。。。
         var time = SimaiProcessor.Serialize(GetRawFumenText(), GetRawFumenPosition());
@@ -203,7 +192,7 @@ public partial class MainWindow : Window
                 Keyboard.IsKeyDown(Key.Down)
             ))
         {
-            if (Bass.BASS_ChannelIsActive(bgmStream) == BASSActive.BASS_ACTIVE_PLAYING)
+            if (AudioManager.ChannelIsPlaying(ChannelType.BGM))
                 await TogglePause();
             SetBgmPosition(time);
         }

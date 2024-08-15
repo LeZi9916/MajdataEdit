@@ -1,4 +1,6 @@
-﻿using System.ComponentModel;
+﻿using MajdataEdit.Types;
+using MajdataEdit.Utils;
+using System.ComponentModel;
 using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
@@ -38,16 +40,16 @@ public partial class SoundSetting : Window
         SliderValueBindingMap.Add(Touch_Slider, Touch_Value);
         SliderValueBindingMap.Add(Hanabi_Slider, Hanabi_Value);
 
-        SetSlider(BGM_Slider, MainWindow.bgmStream, MainWindow.trackStartStream, MainWindow.allperfectStream,
-            MainWindow.clockStream);
-        SetSlider(Answer_Slider, MainWindow.answerStream);
-        SetSlider(Judge_Slider, MainWindow.judgeStream);
-        SetSlider(Break_Slider, MainWindow.breakStream, MainWindow.judgeBreakStream);
-        SetSlider(BreakSlide_Slider, MainWindow.breakSlideStream, MainWindow.judgeBreakSlideStream);
-        SetSlider(Slide_Slider, MainWindow.slideStream, MainWindow.breakSlideStartStream);
-        SetSlider(EX_Slider, MainWindow.judgeExStream);
-        SetSlider(Touch_Slider, MainWindow.touchStream);
-        SetSlider(Hanabi_Slider, MainWindow.hanabiStream, MainWindow.holdRiserStream);
+        SetSlider(BGM_Slider, ChannelType.BGM, ChannelType.TrackStart, ChannelType.APSFX, ChannelType.Clock);
+        SetSlider(Answer_Slider, ChannelType.Answer);
+        SetSlider(Judge_Slider, ChannelType.TapJudge);
+        SetSlider(Break_Slider, ChannelType.Break, ChannelType.BreakJudge);
+        SetSlider(BreakSlide_Slider, ChannelType.BreakSlideEnd, ChannelType.BreakSlideJudge);
+        SetSlider(Slide_Slider, ChannelType.BreakSlideStart, ChannelType.BreakSlideStart);
+        SetSlider(EX_Slider, ChannelType.ExJudge);
+        SetSlider(Touch_Slider, ChannelType.Touch);
+        SetSlider(Hanabi_Slider, ChannelType.Hanabi, ChannelType.HoldRiser);
+
 
         UpdateLevelTimer.AutoReset = true;
         UpdateLevelTimer.Elapsed += UpdateLevelTimer_Elapsed;
@@ -58,28 +60,24 @@ public partial class SoundSetting : Window
     {
         Dispatcher.Invoke(() =>
         {
-            UpdateProgressBar(BGM_Level, MainWindow.bgmStream, MainWindow.trackStartStream, MainWindow.allperfectStream,
-                MainWindow.clockStream);
-            UpdateProgressBar(Answer_Level, MainWindow.answerStream);
-            UpdateProgressBar(Judge_Level, MainWindow.judgeStream);
-            UpdateProgressBar(Break_Level, MainWindow.breakStream, MainWindow.judgeBreakStream);
-            UpdateProgressBar(BreakSlide_Level, MainWindow.breakSlideStream, MainWindow.judgeBreakSlideStream);
-            UpdateProgressBar(Slide_Level, MainWindow.slideStream, MainWindow.breakSlideStartStream);
-            UpdateProgressBar(EX_Level, MainWindow.judgeExStream);
-            UpdateProgressBar(Touch_Level, MainWindow.touchStream);
-            UpdateProgressBar(Hanabi_Level, MainWindow.hanabiStream, MainWindow.holdRiserStream);
+            UpdateProgressBar(BGM_Level, ChannelType.BGM, ChannelType.TrackStart, ChannelType.APSFX, ChannelType.Clock);
+            UpdateProgressBar(Answer_Level, ChannelType.Answer);
+            UpdateProgressBar(Judge_Level, ChannelType.TapJudge);
+            UpdateProgressBar(Break_Level, ChannelType.Break, ChannelType.BreakJudge);
+            UpdateProgressBar(BreakSlide_Level, ChannelType.BreakSlideEnd, ChannelType.BreakSlideJudge);
+            UpdateProgressBar(Slide_Level, ChannelType.BreakSlideStart, ChannelType.BreakSlideStart);
+            UpdateProgressBar(EX_Level, ChannelType.ExJudge);
+            UpdateProgressBar(Touch_Level, ChannelType.Touch);
+            UpdateProgressBar(Hanabi_Level, ChannelType.Hanabi, ChannelType.HoldRiser);
         });
     }
 
-    private void UpdateProgressBar(ProgressBar bar, params int[] channels)
+    private void UpdateProgressBar(ProgressBar bar, params ChannelType[] channels)
     {
         var values = new double[channels.Length];
         var ampLevel = 0f;
         for (var i = 0; i < channels.Length; i++)
-        {
-            Bass.BASS_ChannelGetAttribute(channels[i], BASSAttribute.BASS_ATTRIB_VOL, ref ampLevel);
-            values[i] = Un4seen.Bass.Utils.LevelToDB(Un4seen.Bass.Utils.LowWord(Bass.BASS_ChannelGetLevel(channels[i])) * ampLevel, 32768) + 40;
-        }
+            values[i] = AudioManager.GetChannelDB(channels[i]);
 
         var value = values.Max();
         if (!double.IsNaN(value) && !double.IsInfinity(value)) bar.Value = value * ampLevel;
@@ -88,11 +86,11 @@ public partial class SoundSetting : Window
         if (double.IsNaN(value)) bar.Value -= 1;
     }
 
-    private void SetSlider(Slider slider, params int[] channels)
+    private void SetSlider(Slider slider, params ChannelType[] channels)
     {
         var ampLevel = 0f;
         foreach (var channel in channels)
-            Bass.BASS_ChannelGetAttribute(channel, BASSAttribute.BASS_ATTRIB_VOL, ref ampLevel);
+            AudioManager.GetVolume(channel,ref ampLevel);
         slider.Value = ampLevel;
         SliderValueBindingMap[slider].Content = slider.Value.ToString("P0");
 
@@ -100,7 +98,7 @@ public partial class SoundSetting : Window
         {
             var sld = (Slider)sender;
             foreach (var channel in channels)
-                Bass.BASS_ChannelSetAttribute(channel, BASSAttribute.BASS_ATTRIB_VOL, (float)sld.Value);
+                AudioManager.SetVolume(channel, (float)sld.Value);
 
             SliderValueBindingMap[sld].Content = sld.Value.ToString("P0");
         }
@@ -116,24 +114,16 @@ public partial class SoundSetting : Window
 
     private void BtnSetDefault_Click(object sender, RoutedEventArgs e)
     {
-        Bass.BASS_ChannelGetAttribute(MainWindow.bgmStream, BASSAttribute.BASS_ATTRIB_VOL,
-            ref MainWindow.editorSetting!.Default_BGM_Level);
-        Bass.BASS_ChannelGetAttribute(MainWindow.answerStream, BASSAttribute.BASS_ATTRIB_VOL,
-            ref MainWindow.editorSetting!.Default_Answer_Level);
-        Bass.BASS_ChannelGetAttribute(MainWindow.judgeStream, BASSAttribute.BASS_ATTRIB_VOL,
-            ref MainWindow.editorSetting!.Default_Judge_Level);
-        Bass.BASS_ChannelGetAttribute(MainWindow.breakStream, BASSAttribute.BASS_ATTRIB_VOL,
-            ref MainWindow.editorSetting!.Default_Break_Level);
-        Bass.BASS_ChannelGetAttribute(MainWindow.breakSlideStream, BASSAttribute.BASS_ATTRIB_VOL,
-            ref MainWindow.editorSetting!.Default_Break_Slide_Level);
-        Bass.BASS_ChannelGetAttribute(MainWindow.slideStream, BASSAttribute.BASS_ATTRIB_VOL,
-            ref MainWindow.editorSetting!.Default_Slide_Level);
-        Bass.BASS_ChannelGetAttribute(MainWindow.judgeExStream, BASSAttribute.BASS_ATTRIB_VOL,
-            ref MainWindow.editorSetting!.Default_Ex_Level);
-        Bass.BASS_ChannelGetAttribute(MainWindow.touchStream, BASSAttribute.BASS_ATTRIB_VOL,
-            ref MainWindow.editorSetting!.Default_Touch_Level);
-        Bass.BASS_ChannelGetAttribute(MainWindow.hanabiStream, BASSAttribute.BASS_ATTRIB_VOL,
-            ref MainWindow.editorSetting!.Default_Hanabi_Level);
+        AudioManager.SetVolume(ChannelType.BGM, MainWindow.editorSetting!.Default_BGM_Level);
+        AudioManager.SetVolume(ChannelType.Answer, MainWindow.editorSetting!.Default_Answer_Level);
+        AudioManager.SetVolume(ChannelType.TapJudge, MainWindow.editorSetting!.Default_Judge_Level);
+        AudioManager.SetVolume(ChannelType.Break, MainWindow.editorSetting!.Default_Break_Level);
+        AudioManager.SetVolume(ChannelType.BreakSlideEnd, MainWindow.editorSetting!.Default_Break_Slide_Level);
+        AudioManager.SetVolume(ChannelType.BreakSlideStart, MainWindow.editorSetting!.Default_Slide_Level);
+        AudioManager.SetVolume(ChannelType.ExJudge, MainWindow.editorSetting!.Default_Ex_Level);
+        AudioManager.SetVolume(ChannelType.Touch, MainWindow.editorSetting!.Default_Touch_Level);
+        AudioManager.SetVolume(ChannelType.Hanabi, MainWindow.editorSetting!.Default_Hanabi_Level);
+
         MainWindow.SaveEditorSetting();
         MessageBox.Show(MainWindow.GetLocalizedString("SetVolumeDefaultSuccess"));
     }
