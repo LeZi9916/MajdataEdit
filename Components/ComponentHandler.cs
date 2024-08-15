@@ -90,7 +90,7 @@ public partial class MainWindow : Window
     #endregion
     #region MENU BARS
 
-    private void Menu_New_Click(object sender, RoutedEventArgs e)
+    private async void Menu_New_Click(object sender, RoutedEventArgs e)
     {
         if (!isSaved)
             if (!AskSave())
@@ -103,7 +103,7 @@ public partial class MainWindow : Window
         {
             var fileInfo = new FileInfo(openFileDialog.FileName);
             CreateNewFumen(fileInfo.DirectoryName!);
-            initFromFile(fileInfo.DirectoryName!);
+            await initFromFile(fileInfo.DirectoryName!);
         }
     }
 
@@ -123,9 +123,9 @@ public partial class MainWindow : Window
         }
     }
 
-    private void Menu_Save_Click(object sender, RoutedEventArgs e)
+    private async void Menu_Save_Click(object sender, RoutedEventArgs e)
     {
-        SaveFumen(true);
+        await SaveFumen(true);
         SystemSounds.Beep.Play();
     }
 

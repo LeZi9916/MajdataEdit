@@ -676,7 +676,7 @@ public partial class MainWindow
         return WAV_HeaderInfo.ToArray();
     }
 
-    private void WaveStopMonitorUpdate()
+    private async void WaveStopMonitorUpdate()
     {
         // 监控是否应当停止
         if (!isPlan2Stop &&
@@ -687,17 +687,13 @@ public partial class MainWindow
             if (extraTime4AllPerfect < 0)
             {
                 // 足够播完 直接停止
-                Dispatcher.Invoke(() => { ToggleStop(); });
+                await ToggleStop();
             }
             else
             {
                 // 不够播完 等待后停止
-                var stopPlayingTimer = new Timer(double.IsNormal(extraTime4AllPerfect)? (int)(extraTime4AllPerfect * 1000) : int.MaxValue)
-                {
-                    AutoReset = false
-                };
-                stopPlayingTimer.Elapsed += (sender, e) => { Dispatcher.Invoke(() => { ToggleStop(); }); };
-                stopPlayingTimer.Start();
+                await Task.Delay(double.IsNormal(extraTime4AllPerfect) ? (int)(extraTime4AllPerfect * 1000) : int.MaxValue);
+                await ToggleStop();
             }
         }
     }

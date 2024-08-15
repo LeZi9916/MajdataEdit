@@ -4,7 +4,6 @@ using MajdataEdit.Utils;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
-using Un4seen.Bass;
 using Timer = System.Timers.Timer;
 
 namespace MajdataEdit;
@@ -36,7 +35,7 @@ public partial class MainWindow : Window
                 return;
 
         FumenContent.Focus();
-        SaveFumen();
+        await SaveFumen();
         if (CheckAndStartView()) return;
         Op_Button.IsEnabled = false;
         isPlaying = true;
@@ -70,10 +69,10 @@ public partial class MainWindow : Window
                 startAt = DateTime.Now.AddSeconds(5d);
                 AudioManager.Play(ChannelType.TrackStart, true);
 
-                if (!await RequestToRun(startAt, playMethod)) return;
-                while (DateTime.Now.Ticks < startAt.Ticks)
-                    if (EditorState != EditorControlMethod.Start)
-                        return;
+                if (!await RequestToRun(startAt, playMethod)) 
+                    return;
+
+                await Task.Delay(startAt - DateTime.Now);
                 Dispatcher.Invoke(() =>
                 {
                     playStartTime = AudioManager.GetSeconds(ChannelType.BGM);

@@ -140,6 +140,10 @@ public partial class MainWindow : Window
         FumenContent.Selection.Select(pointer, pointer);
     }
 
+    /// <summary>
+    /// 将富文本控件内的光标定位至波形图对应的Note上
+    /// </summary>
+    /// <param name="noteGroupIndex"></param>
     private void SeekTextFromIndex(int noteGroupIndex)
     {
         if (SimaiProcessor.notelist.Count > noteGroupIndex + 1 && noteGroupIndex >= 0)
@@ -151,7 +155,7 @@ public partial class MainWindow : Window
         }
     }
 
-    public void ScrollToFumenContentSelection(int positionX, int positionY)
+    public async void ScrollToFumenContentSelection(int positionX, int positionY)
     {
         // 这玩意用于其他窗口来滚动Scroll 因为涉及到好多变量都是private的
         var pointer = FumenContent.Document.Blocks.ToList()[positionY].ContentStart.GetPositionAtOffset(positionX);
@@ -162,7 +166,7 @@ public partial class MainWindow : Window
         if (AudioManager.ChannelIsPlaying(ChannelType.BGM) && (bool)FollowPlayCheck.IsChecked!)
             return;
         var time = SimaiProcessor.Serialize(GetRawFumenText(), GetRawFumenPosition());
-        SetBgmPosition(time);
+        await SetBgmPosition(time);
         //Console.WriteLine("SelectionChanged");
         SimaiProcessor.ClearNoteListPlayedState();
         ghostCusorPositionTime = (float)time;
@@ -250,8 +254,10 @@ public partial class MainWindow : Window
     //*FILE CONTROL
     private async Task initFromFile(string path) //file name should not be included in path
     {
-        if (soundSetting != null) soundSetting.Close();
-        if (editorSetting == null) ReadEditorSetting();
+        if (soundSetting != null) 
+            soundSetting.Close();
+        if (editorSetting == null) 
+            await ReadEditorSettingAsync();
 
         var useOgg = File.Exists(path + "/track.ogg");
 
@@ -287,7 +293,7 @@ public partial class MainWindow : Window
 
 
         LevelSelector.SelectedItem = LevelSelector.Items[0];
-        await ReadSetting();
+        await ReadSettingAsync();
         SetRawFumenText(SimaiProcessor.fumens[selectedDifficulty]);
         SeekTextFromTime();
         SimaiProcessor.Serialize(GetRawFumenText());
@@ -395,7 +401,7 @@ public partial class MainWindow : Window
             MessageBoxButton.YesNoCancel);
         if (result == MessageBoxResult.Yes)
         {
-            SaveFumen(true);
+            SaveFumen(true).Wait();
             return true;
         }
 
@@ -403,7 +409,7 @@ public partial class MainWindow : Window
         return true;
     }
 
-    private void SaveFumen(bool writeToDisk = false)
+    private async Task SaveFumen(bool writeToDisk = false)
     {
         if (selectedDifficulty == -1) return;
         SimaiProcessor.fumens[selectedDifficulty] = GetRawFumenText();
@@ -419,7 +425,7 @@ public partial class MainWindow : Window
         }
 
         SimaiProcessor.SaveData(MaidataDir + "/maidata.bak.txt");
-        SaveSetting();
+        await SaveSettingAsync();
         if (writeToDisk)
         {
             SimaiProcessor.SaveData(MaidataDir + "/maidata.txt");
@@ -427,7 +433,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private async Task SaveSetting()
+    private async ValueTask SaveSettingAsync()
     {
         if (MaidataDir == "") 
             return;
@@ -443,7 +449,7 @@ public partial class MainWindow : Window
         await JsonSerializer.SerializeAsync(stream, setting);
     }
 
-    private async Task ReadSetting()
+    private async ValueTask ReadSettingAsync()
     {
         var path = Path.Combine(MaidataDir, majSettingFilename);
         if (!File.Exists(path)) 
@@ -459,7 +465,7 @@ public partial class MainWindow : Window
             AudioManager.ReadSetting(setting);
         }
 
-        await SaveSetting(); // 覆盖旧版本setting
+        await SaveSettingAsync(); // 覆盖旧版本setting
     }
 
     private void CreateNewFumen(string path)
@@ -474,15 +480,15 @@ public partial class MainWindow : Window
                 "&first=0\n");
     }
 
-    private void CreateEditorSetting()
+    private async ValueTask CreateEditorSettingAsync()
     {
         editorSetting = new EditorSetting
         {
             RenderMode =
             RenderOptions.ProcessRenderMode == RenderMode.SoftwareOnly ? RenderType.SW : RenderType.HW // 使用命令行指定强制软件渲染时，同步修改配置值
         };
-
-        File.WriteAllText(editorSettingFilename, JsonConvert.SerializeObject(editorSetting, Formatting.Indented));
+        using (var stream = File.Create(editorSettingFilename))
+            await Serializer.Json.SerializeAsync(stream, editorSetting);
 
         var esp = new EditorSettingPanel(true)
         {
@@ -491,9 +497,10 @@ public partial class MainWindow : Window
         esp.ShowDialog();
     }
 
-    private void ReadEditorSetting()
+    private async ValueTask ReadEditorSettingAsync()
     {
-        if (!File.Exists(editorSettingFilename)) CreateEditorSetting();
+        if (!File.Exists(editorSettingFilename)) 
+            await CreateEditorSettingAsync();
         var json = File.ReadAllText(editorSettingFilename);
         editorSetting = JsonConvert.DeserializeObject<EditorSetting>(json)!;
 
@@ -567,7 +574,7 @@ public partial class MainWindow : Window
         });
     }
 
-    private async Task DrawFFT()
+    private async ValueTask DrawFFT()
     {
         await Dispatcher.InvokeAsync(() =>
         {
@@ -619,7 +626,7 @@ public partial class MainWindow : Window
         MusicWave.Source = WaveBitmap;
     }
 
-    private async Task DrawWave()
+    private async ValueTask DrawWave()
     {
         if (isDrawing) return;
         if (WaveBitmap == null) return;
@@ -684,7 +691,7 @@ public partial class MainWindow : Window
                     lastbpm = timing.currentBpm;
                 }
 
-            bpmChangeTimes.Add(AudioManager.GetSeconds(ChannelType.BGM));
+            bpmChangeTimes.Add(AudioManager.GetLength(ChannelType.BGM));
 
             double time = SimaiProcessor.first;
             var signature = 4; //预留拍号
@@ -920,7 +927,7 @@ public partial class MainWindow : Window
             await TogglePause();
         delta = delta * deltatime / (Width / 2);
         var time = AudioManager.GetSeconds(ChannelType.BGM);
-        SetBgmPosition(time + delta);
+        await SetBgmPosition(time + delta);
         SimaiProcessor.ClearNoteListPlayedState();
         SeekTextFromTime();
         await DrawWave();
@@ -1147,7 +1154,7 @@ public partial class MainWindow : Window
                 if (!onStart) MessageBox.Show(GetLocalizedString("NoNewVersion"), GetLocalizedString("CheckUpdate"));
             }
         } 
-        catch (Exception e)
+        catch
         {
             // 网络请求失败
             if (!onStart) MessageBox.Show(GetLocalizedString("RequestFail"), GetLocalizedString("CheckUpdate"));
@@ -1188,8 +1195,8 @@ public partial class MainWindow : Window
         return GetWindowsTitleString() + " - " + info;
     }
 
-    public void OpenFile(string path)
+    public async void OpenFile(string path)
     {
-        initFromFile(path);
+        await initFromFile(path);
     }
 }

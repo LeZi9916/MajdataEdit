@@ -51,7 +51,7 @@ public partial class MainWindow : Window
         InitWave();
 
         AudioManager.Init();
-        ReadEditorSetting();
+        await ReadEditorSettingAsync();
 
         chartChangeTimer.Elapsed += ChartChangeTimer_Elapsed;
         chartChangeTimer.AutoReset = false;
@@ -82,7 +82,7 @@ public partial class MainWindow : Window
                     // 尝试打开上次未正常关闭的谱面 然后再打开恢复页面
                     try
                     {
-                        initFromFile(lastEditPath);
+                        await initFromFile(lastEditPath);
                     }
                     catch (Exception error)
                     {
@@ -133,7 +133,7 @@ public partial class MainWindow : Window
         soundSetting.Close();
         //if (bpmtap != null) { bpmtap.Close(); }
         //if (muriCheck != null) { muriCheck.Close(); }
-        SaveSetting().Wait();
+        SaveSettingAsync().AsTask().Wait();
 
         AudioManager.Disposal();
 
@@ -147,7 +147,7 @@ public partial class MainWindow : Window
         e.Effects = DragDropEffects.Move;
     }
 
-    private void Grid_Drop(object sender, DragEventArgs e)
+    private async void Grid_Drop(object sender, DragEventArgs e)
     {
         if (e.Data.GetDataPresent(DataFormats.FileDrop))
             //Console.WriteLine(e.Data.GetData(DataFormats.FileDrop).ToString());
@@ -160,7 +160,7 @@ public partial class MainWindow : Window
                         if (!AskSave())
                             return;
                     var fileInfo = new FileInfo(path);
-                    initFromFile(fileInfo.DirectoryName!);
+                    await initFromFile(fileInfo.DirectoryName!);
                 }
             }
     }
@@ -194,7 +194,7 @@ public partial class MainWindow : Window
         {
             if (AudioManager.ChannelIsPlaying(ChannelType.BGM))
                 await TogglePause();
-            SetBgmPosition(time);
+            await SetBgmPosition(time);
         }
 
         //Console.WriteLine("SelectionChanged");

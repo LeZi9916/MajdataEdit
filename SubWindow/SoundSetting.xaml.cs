@@ -58,7 +58,7 @@ public partial class SoundSetting : Window
         while(true)
         {
             if (source.IsCancellationRequested)
-                break;
+                break ;
             UpdateProgressBar(BGM_Level, ChannelType.BGM, ChannelType.TrackStart, ChannelType.APSFX, ChannelType.Clock);
             UpdateProgressBar(Answer_Level, ChannelType.Answer);
             UpdateProgressBar(Judge_Level, ChannelType.TapJudge);

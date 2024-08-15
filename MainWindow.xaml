@@ -53,7 +53,7 @@
                PreviewMouseLeftButtonDown="MusicWave_PreviewMouseLeftButtonDown" MouseMove="MusicWave_MouseMove"
                Grid.ColumnSpan="3" SizeChanged="MusicWave_SizeChanged" Grid.RowSpan="2" Grid.Row="1" />
         <Line StrokeThickness="3" Y2="56" Height="74" VerticalAlignment="Bottom" Stroke="Red" Y1="15"
-              HorizontalAlignment="Left" Width="45" Grid.ColumnSpan="2" Margin="357,0,0,0" Grid.RowSpan="2" Grid.Row="1" Grid.Column="1" />
+              HorizontalAlignment="Left" Width="45" Grid.ColumnSpan="2" Margin="351,0,0,0" Grid.RowSpan="2" Grid.Row="1" Grid.Column="1" />
 
         <Menu Height="19" VerticalAlignment="Top" Background="{DynamicResource ButtonsBackground}"
               Foreground="{DynamicResource ButtonForeground}" Grid.ColumnSpan="3" Grid.RowSpan="2">
@@ -290,5 +290,18 @@
         </StackPanel>
         <Rectangle x:Name="Cover" Fill="#FF1F1F1F" Margin="0,18,0,0" Stroke="Black" Grid.ColumnSpan="3"
                    d:IsHidden="True" Grid.RowSpan="2" Grid.Row="1" />
+        <Canvas x:Name="WaitCanvas" Background="#FF1F1F1F" Grid.ColumnSpan="3" d:IsHidden="True" Grid.RowSpan="2" Grid.Row="1" Opacity="0" Visibility="Collapsed">
+            <Grid Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Canvas}}"
+                  Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Canvas}}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="3*"/>
+                    <RowDefinition Height="1*"/>
+                    <RowDefinition Height="5*"/>
+                </Grid.RowDefinitions>
+                <!-- 在Grid中添加子元素，并居中显示 -->
+                <TextBlock x:Name="WaitCanvasText" Text="Waiting for View response..." FontSize="20" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Bottom" Grid.Row="0"/>
+                <ProgressBar IsIndeterminate="True"  Width="200" Height="15" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,0,0,10" Grid.Row="2"/>
+            </Grid>
+        </Canvas>
     </Grid>
 </Window>

@@ -31,9 +31,9 @@ public partial class MainWindow : Window
         await TogglePlayAndPause();
         SetControlButtonActive(true);
     }
-    private void SaveFile_Command_CanExecute(object? sender, CanExecuteRoutedEventArgs e)
+    private async void SaveFile_Command_CanExecute(object? sender, CanExecuteRoutedEventArgs e)
     {
-        SaveFumen(true);
+        await SaveFumen(true);
         SystemSounds.Beep.Play();
     }
     /// <summary>

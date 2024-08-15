@@ -156,6 +156,7 @@ public static class AudioManager
         var stream = GetChannelId(type);
         return Bass.BASS_ChannelGetInfo(stream);
     }
+    public static double GetLength(in ChannelType type) => Bass.BASS_ChannelBytes2Seconds(GetChannelId(type), Bass.BASS_ChannelGetLength(GetChannelId(type)));
     public static double GetSeconds(in ChannelType type)
     {
         var stream = GetChannelId(type);
