@@ -37,7 +37,7 @@ public partial class MainWindow
     public int touchStream = -114514;
     public int trackStartStream = -114514;
 
-    private List<SoundEffectTiming>? waitToBePlayed;
+    private List<SoundEffectTiming>? waitToBePlayed { get; set; }
     //private Stopwatch sw = new Stopwatch();
 
     // This update "middle" frequently to monitor if the wave has to be stopped
