@@ -107,7 +107,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void Menu_Open_Click(object sender, RoutedEventArgs e)
+    private async void Menu_Open_Click(object sender, RoutedEventArgs e)
     {
         if (!isSaved)
             if (!AskSave())
@@ -119,7 +119,7 @@ public partial class MainWindow : Window
         if ((bool)openFileDialog.ShowDialog()!)
         {
             var fileInfo = new FileInfo(openFileDialog.FileName);
-            initFromFile(fileInfo.DirectoryName!);
+            await initFromFile(fileInfo.DirectoryName!);
         }
     }
 

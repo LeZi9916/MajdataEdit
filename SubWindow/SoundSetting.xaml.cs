@@ -17,7 +17,7 @@ public partial class SoundSetting : Window
     private readonly MainWindow MainWindow;
     private readonly Dictionary<Slider, Label> SliderValueBindingMap = new(); // Slider和ValueLabel的绑定关系
 
-    private readonly Timer UpdateLevelTimer = new(1);
+    CancellationTokenSource source = new();
 
     public SoundSetting()
     {
@@ -45,39 +45,46 @@ public partial class SoundSetting : Window
         SetSlider(Judge_Slider, ChannelType.TapJudge);
         SetSlider(Break_Slider, ChannelType.Break, ChannelType.BreakJudge);
         SetSlider(BreakSlide_Slider, ChannelType.BreakSlideEnd, ChannelType.BreakSlideJudge);
-        SetSlider(Slide_Slider, ChannelType.BreakSlideStart, ChannelType.BreakSlideStart);
+        SetSlider(Slide_Slider, ChannelType.Slide, ChannelType.BreakSlideStart);
         SetSlider(EX_Slider, ChannelType.ExJudge);
         SetSlider(Touch_Slider, ChannelType.Touch);
         SetSlider(Hanabi_Slider, ChannelType.Hanabi, ChannelType.HoldRiser);
 
-
-        UpdateLevelTimer.AutoReset = true;
-        UpdateLevelTimer.Elapsed += UpdateLevelTimer_Elapsed;
-        UpdateLevelTimer.Start();
+        UpdateDBLevel();
     }
 
-    private void UpdateLevelTimer_Elapsed(object? sender, ElapsedEventArgs e)
+    async void UpdateDBLevel()
     {
-        Dispatcher.Invoke(() =>
+        while(true)
         {
+            if (source.IsCancellationRequested)
+                break;
             UpdateProgressBar(BGM_Level, ChannelType.BGM, ChannelType.TrackStart, ChannelType.APSFX, ChannelType.Clock);
             UpdateProgressBar(Answer_Level, ChannelType.Answer);
             UpdateProgressBar(Judge_Level, ChannelType.TapJudge);
             UpdateProgressBar(Break_Level, ChannelType.Break, ChannelType.BreakJudge);
             UpdateProgressBar(BreakSlide_Level, ChannelType.BreakSlideEnd, ChannelType.BreakSlideJudge);
-            UpdateProgressBar(Slide_Level, ChannelType.BreakSlideStart, ChannelType.BreakSlideStart);
+            UpdateProgressBar(Slide_Level, ChannelType.Slide, ChannelType.BreakSlideStart);
             UpdateProgressBar(EX_Level, ChannelType.ExJudge);
             UpdateProgressBar(Touch_Level, ChannelType.Touch);
             UpdateProgressBar(Hanabi_Level, ChannelType.Hanabi, ChannelType.HoldRiser);
-        });
+            await Task.Delay(16);
+        }
     }
-
+    /// <summary>
+    /// 更新对应Channel的响度
+    /// </summary>
+    /// <param name="bar"></param>
+    /// <param name="channels"></param>
     private void UpdateProgressBar(ProgressBar bar, params ChannelType[] channels)
     {
         var values = new double[channels.Length];
         var ampLevel = 0f;
         for (var i = 0; i < channels.Length; i++)
+        {
+            ampLevel = AudioManager.GetVolume(channels[i]);
             values[i] = AudioManager.GetChannelDB(channels[i]);
+        }
 
         var value = values.Max();
         if (!double.IsNaN(value) && !double.IsInfinity(value)) bar.Value = value * ampLevel;
@@ -108,8 +115,7 @@ public partial class SoundSetting : Window
 
     private void SoundSettingWindow_Closing(object sender, CancelEventArgs e)
     {
-        UpdateLevelTimer.Stop();
-        UpdateLevelTimer.Dispose();
+        source.Cancel();
     }
 
     private void BtnSetDefault_Click(object sender, RoutedEventArgs e)

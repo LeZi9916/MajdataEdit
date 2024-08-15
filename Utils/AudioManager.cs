@@ -34,24 +34,23 @@ public static class AudioManager
 
     public static void Init()
     {
-        answerStream = Bass.BASS_StreamCreateFile(SFX_PATH + "answer.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        judgeStream = Bass.BASS_StreamCreateFile(SFX_PATH + "judge.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        judgeBreakStream = Bass.BASS_StreamCreateFile(SFX_PATH + "judge_break.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        judgeExStream = Bass.BASS_StreamCreateFile(SFX_PATH + "judge_ex.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        breakStream = Bass.BASS_StreamCreateFile(SFX_PATH + "break.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        hanabiStream = Bass.BASS_StreamCreateFile(SFX_PATH + "hanabi.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        holdRiserStream = Bass.BASS_StreamCreateFile(SFX_PATH + "touchHold_riser.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        trackStartStream = Bass.BASS_StreamCreateFile(SFX_PATH + "track_start.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        slideStream = Bass.BASS_StreamCreateFile(SFX_PATH + "slide.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        touchStream = Bass.BASS_StreamCreateFile(SFX_PATH + "touch.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        allperfectStream = Bass.BASS_StreamCreateFile(SFX_PATH + "all_perfect.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        fanfareStream = Bass.BASS_StreamCreateFile(SFX_PATH + "fanfare.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        clockStream = Bass.BASS_StreamCreateFile(SFX_PATH + "clock.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        breakSlideStartStream =
-            Bass.BASS_StreamCreateFile(SFX_PATH + "break_slide_start.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        breakSlideStream = Bass.BASS_StreamCreateFile(SFX_PATH + "break_slide.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
-        judgeBreakSlideStream =
-            Bass.BASS_StreamCreateFile(SFX_PATH + "judge_break_slide.wav", 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
+        answerStream = Bass.BASS_StreamCreateFile(Path.Combine(SFX_PATH, "answer.wav"), 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
+        judgeStream = Bass.BASS_StreamCreateFile(Path.Combine(SFX_PATH, "judge.wav"), 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
+        judgeBreakStream = Bass.BASS_StreamCreateFile(Path.Combine(SFX_PATH, "judge_break.wav"), 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
+        judgeExStream = Bass.BASS_StreamCreateFile(Path.Combine(SFX_PATH, "judge_ex.wav"), 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
+        breakStream = Bass.BASS_StreamCreateFile(Path.Combine(SFX_PATH, "break.wav"), 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
+        hanabiStream = Bass.BASS_StreamCreateFile(Path.Combine(SFX_PATH, "hanabi.wav"), 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
+        holdRiserStream = Bass.BASS_StreamCreateFile(Path.Combine(SFX_PATH, "touchHold_riser.wav"), 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
+        trackStartStream = Bass.BASS_StreamCreateFile(Path.Combine(SFX_PATH, "track_start.wav"), 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
+        slideStream = Bass.BASS_StreamCreateFile(Path.Combine(SFX_PATH, "slide.wav"), 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
+        touchStream = Bass.BASS_StreamCreateFile(Path.Combine(SFX_PATH, "touch.wav"), 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
+        allperfectStream = Bass.BASS_StreamCreateFile(Path.Combine(SFX_PATH, "all_perfect.wav"), 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
+        fanfareStream = Bass.BASS_StreamCreateFile(Path.Combine(SFX_PATH, "fanfare.wav"), 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
+        clockStream = Bass.BASS_StreamCreateFile(Path.Combine(SFX_PATH, "clock.wav"), 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
+        breakSlideStartStream = Bass.BASS_StreamCreateFile(Path.Combine(SFX_PATH, "break_slide_start.wav"), 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
+        breakSlideStream = Bass.BASS_StreamCreateFile(Path.Combine(SFX_PATH, "break_slide.wav"), 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
+        judgeBreakSlideStream = Bass.BASS_StreamCreateFile(Path.Combine(SFX_PATH, "judge_break_slide.wav"), 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
+
     }
     public static BASS_CHANNELINFO? LoadBGM(string path)
     {
@@ -192,6 +191,7 @@ public static class AudioManager
             ChannelType.TapJudge => judgeStream,
             ChannelType.Touch => touchStream,
             ChannelType.TrackStart => trackStartStream,
+            ChannelType.Slide => slideStream,
             _ => -1
         };
     }

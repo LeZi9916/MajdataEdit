@@ -449,14 +449,15 @@ public partial class MainWindow : Window
         if (!File.Exists(path)) 
             return;
 
-        using var stream = File.OpenRead(path);
-        var setting = await JsonSerializer.DeserializeAsync<MajSetting>(stream);
+        using (var stream = File.OpenRead(path))
+        {
+            var setting = await JsonSerializer.DeserializeAsync<MajSetting>(stream);
+            LevelSelector.SelectedIndex = setting!.LastEditDiff;
+            selectedDifficulty = setting.LastEditDiff;
+            await SetBgmPosition(setting.LastEditTime);
 
-        LevelSelector.SelectedIndex = setting!.LastEditDiff;
-        selectedDifficulty = setting.LastEditDiff;
-        SetBgmPosition(setting.LastEditTime);
-
-        AudioManager.ReadSetting(setting);
+            AudioManager.ReadSetting(setting);
+        }
 
         await SaveSetting(); // 覆盖旧版本setting
     }
