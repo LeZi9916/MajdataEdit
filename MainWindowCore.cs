@@ -4,18 +4,13 @@ using System.Drawing.Drawing2D;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Text.Json;
-using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Interop;
-using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Media.Media3D;
 using System.Windows.Threading;
 using DiscordRPC;
 using MajdataEdit.Modules.AutoSaveModule;
@@ -23,11 +18,8 @@ using MajdataEdit.Modules.SyntaxModule;
 using MajdataEdit.Types;
 using MajdataEdit.Utils;
 using Microsoft.Win32;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Semver;
 using Un4seen.Bass;
-using Un4seen.Bass.AddOn.Fx;
 using WPFLocalizeExtension.Engine;
 using WPFLocalizeExtension.Extensions;
 using Brush = System.Drawing.Brush;
@@ -37,7 +29,6 @@ using JsonSerializer = System.Text.Json.JsonSerializer;
 using LinearGradientBrush = System.Drawing.Drawing2D.LinearGradientBrush;
 using Pen = System.Drawing.Pen;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
-using Timer = System.Timers.Timer;
 
 namespace MajdataEdit;
 
@@ -276,10 +267,16 @@ public partial class MainWindow : Window
             AudioManager.DisposalChannel(ChannelType.BGM);
 
 
-        var info = AudioManager.LoadBGM(audioPath);
-        if (info?.freq != 44100) 
+        var info = AudioManager.LoadBGM(audioPath,waveRaws);
+        if (info is null)
+        {
+            MessageBox.Show("mp3/ogg解码失败。\nMP3/OGG Decode fail.\n");
+            Process.Start("https://github.com/LingFeng-bbben/MajdataEdit/issues/26");
+            return;
+        }
+        else if (info.freq != 44100) 
             MessageBox.Show(GetLocalizedString("Warn44100Hz"), GetLocalizedString("Attention"));
-        ReadWaveFromFile();
+        songLength = AudioManager.GetLength(ChannelType.BGM);
         SimaiProcessor.ClearData();
 
         if (!SimaiProcessor.ReadData(dataPath)) 
@@ -292,7 +289,6 @@ public partial class MainWindow : Window
         SeekTextFromTime();
         SimaiProcessor.Serialize(GetRawFumenText());
         FumenContent.Focus();
-        await DrawWave();
 
         OffsetTextBox.Text = SimaiProcessor.first.ToString();
 
@@ -331,42 +327,6 @@ public partial class MainWindow : Window
 
     }
     void SetErrCount<T>(T eCount) => Dispatcher.Invoke(() => ErrCount.Content = $"{eCount}");
-    private void ReadWaveFromFile()
-    {
-        var useOgg = File.Exists(MaidataDir + "/track.ogg");
-        var bgmDecode = Bass.BASS_StreamCreateFile(MaidataDir + "/track" + (useOgg ? ".ogg" : ".mp3"), 0L, 0L, BASSFlag.BASS_STREAM_DECODE);
-        try
-        {
-            songLength = Bass.BASS_ChannelBytes2Seconds(bgmDecode,
-                Bass.BASS_ChannelGetLength(bgmDecode, BASSMode.BASS_POS_BYTE));
-/*                int sampleNumber = (int)((songLength * 1000) / (0.02f * 1000));
-                wavedBs = new float[sampleNumber];
-                for (int i = 0; i < sampleNumber; i++)
-                {
-                    wavedBs[i] = Bass.BASS_ChannelGetLevels(bgmDecode, 0.02f, BASSLevel.BASS_LEVEL_MONO)[0];
-                }*/
-            Bass.BASS_StreamFree(bgmDecode);
-            var bgmSample = Bass.BASS_SampleLoad(MaidataDir + "/track" + (useOgg ? ".ogg" : ".mp3"), 0, 0, 1, BASSFlag.BASS_DEFAULT);
-            var bgmInfo = Bass.BASS_SampleGetInfo(bgmSample);
-            var freq = bgmInfo.freq;
-            var sampleCount = (long)(songLength * freq * 2);
-            var bgmRAW = new short[sampleCount];
-            Bass.BASS_SampleGetData(bgmSample, bgmRAW);
-
-            waveRaws[0] = new short[sampleCount / 20 + 1];
-            for (var i = 0; i < sampleCount; i = i + 20) waveRaws[0][i / 20] = bgmRAW[i];
-            waveRaws[1] = new short[sampleCount / 50 + 1];
-            for (var i = 0; i < sampleCount; i = i + 50) waveRaws[1][i / 50] = bgmRAW[i];
-            waveRaws[2] = new short[sampleCount / 100 + 1];
-            for (var i = 0; i < sampleCount; i = i + 100) waveRaws[2][i / 100] = bgmRAW[i];
-        }
-        catch (Exception e)
-        {
-            MessageBox.Show("mp3/ogg解码失败。\nMP3/OGG Decode fail.\n" + e.Message + Bass.BASS_ErrorGetCode());
-            Bass.BASS_StreamFree(bgmDecode);
-            Process.Start("https://github.com/LingFeng-bbben/MajdataEdit/issues/26");
-        }
-    }
 
     private void SetSavedState(bool state)
     {
@@ -935,7 +895,6 @@ public partial class MainWindow : Window
         await SetBgmPosition(time + delta);
         SimaiProcessor.ClearNoteListPlayedState();
         SeekTextFromTime();
-        await DrawWave();
     }
 
     public static string GetLocalizedString(string key, string resourceFileName = "Langs", bool addSpaceAfter = false)
@@ -953,10 +912,6 @@ public partial class MainWindow : Window
 
         return localizedString ?? key;
     }
-
-    
-
-    
 
     private void SetPlaybackSpeed(float speed)
     {
@@ -978,9 +933,6 @@ public partial class MainWindow : Window
         AudioManager.SetSeconds(ChannelType.BGM, time);
     }
 
-
-    
-    
     private void InternalSwitchWindow(bool moveToPlace = true)
     {
         var windowPtr = FindWindow(null, "MajdataView");

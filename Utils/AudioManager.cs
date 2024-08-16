@@ -55,15 +55,35 @@ public static class AudioManager
         judgeBreakSlideStream = Bass.BASS_StreamCreateFile(Path.Combine(SFX_PATH, "judge_break_slide.wav"), 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
 
     }
-    public static BASS_CHANNELINFO? LoadBGM(string path)
+    public static BASS_CHANNELINFO? LoadBGM(string path,in short[][] waveRaws)
     {
-        if (!IsInvaildChannel(ChannelType.BGM))
-            DisposalChannel(ChannelType.BGM);
+        try
+        {
+            if (!IsInvaildChannel(ChannelType.BGM))
+                DisposalChannel(ChannelType.BGM);
 
-        var decodeStream = Bass.BASS_StreamCreateFile(path, 0L, 0L, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_STREAM_PRESCAN);
-        bgmStream = BassFx.BASS_FX_TempoCreate(decodeStream, BASSFlag.BASS_FX_FREESOURCE);
+            var decodeStream = Bass.BASS_StreamCreateFile(path, 0L, 0L, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_STREAM_PRESCAN);
+            bgmStream = BassFx.BASS_FX_TempoCreate(decodeStream, BASSFlag.BASS_FX_FREESOURCE);
+            var length = GetLength(ChannelType.BGM);
+            var bgmSample = Bass.BASS_SampleLoad(path, 0, 0, 1, BASSFlag.BASS_DEFAULT);
+            var bgmInfo = Bass.BASS_SampleGetInfo(bgmSample);
+            var freq = bgmInfo.freq;
+            var sampleCount = (long)(length * freq * 2);
+            var bgmRAW = new short[sampleCount];
+            Bass.BASS_SampleGetData(bgmSample, bgmRAW);
 
-        return Bass.BASS_ChannelGetInfo(bgmStream);
+            waveRaws[0] = new short[sampleCount / 20 + 1];
+            for (var i = 0; i < sampleCount; i = i + 20) waveRaws[0][i / 20] = bgmRAW[i];
+            waveRaws[1] = new short[sampleCount / 50 + 1];
+            for (var i = 0; i < sampleCount; i = i + 50) waveRaws[1][i / 50] = bgmRAW[i];
+            waveRaws[2] = new short[sampleCount / 100 + 1];
+            for (var i = 0; i < sampleCount; i = i + 100) waveRaws[2][i / 100] = bgmRAW[i];
+
+
+            return Bass.BASS_ChannelGetInfo(bgmStream);
+        }
+        catch
+        { return null; }
     }
     public static void ReadSetting(MajSetting setting)
     {

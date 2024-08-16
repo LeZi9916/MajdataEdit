@@ -18,7 +18,7 @@ public partial class MainWindow : Window
     private async void StopButton_Click(object sender, RoutedEventArgs e) => await ToggleStop();
     private async void Op_Button_Click(object sender, RoutedEventArgs e) => await TogglePlayAndStop(PlayMethod.Op);
 
-    private async void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         var i = LevelSelector.SelectedIndex;
         SetRawFumenText(SimaiProcessor.fumens[i]);
@@ -26,7 +26,6 @@ public partial class MainWindow : Window
         LevelTextBox.Text = SimaiProcessor.levels[selectedDifficulty];
         SetSavedState(true);
         SimaiProcessor.Serialize(GetRawFumenText());
-        await DrawWave();
         SyntaxCheck();
     }
 
@@ -37,14 +36,13 @@ public partial class MainWindow : Window
         SimaiProcessor.levels[selectedDifficulty] = LevelTextBox.Text;
     }
 
-    private async void OffsetTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    private void OffsetTextBox_TextChanged(object sender, TextChangedEventArgs e)
     {
         SetSavedState(false);
         try
         {
             SimaiProcessor.first = float.Parse(OffsetTextBox.Text);
             SimaiProcessor.Serialize(GetRawFumenText());
-            await DrawWave();
         }
         catch
         {

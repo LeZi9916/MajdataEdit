@@ -4,19 +4,17 @@ using System.Windows.Input;
 namespace MajdataEdit;
 public partial class MainWindow : Window
 {
-    private async void WaveViewZoomIn_Click(object sender, RoutedEventArgs e)
+    private void WaveViewZoomIn_Click(object sender, RoutedEventArgs e)
     {
         if (deltatime > 1)
             deltatime -= 1;
-        await DrawWave();
         FumenContent.Focus();
     }
 
-    private async void WaveViewZoomOut_Click(object sender, RoutedEventArgs e)
+    private void WaveViewZoomOut_Click(object sender, RoutedEventArgs e)
     {
         if (deltatime < 10)
             deltatime += 1;
-        await DrawWave();
         FumenContent.Focus();
     }
 
@@ -42,9 +40,8 @@ public partial class MainWindow : Window
         lastMousePointX = e.GetPosition(this).X;
     }
 
-    private async void MusicWave_SizeChanged(object sender, SizeChangedEventArgs e)
+    private void MusicWave_SizeChanged(object sender, SizeChangedEventArgs e)
     {
         InitWave();
-        await DrawWave();
     }
 }

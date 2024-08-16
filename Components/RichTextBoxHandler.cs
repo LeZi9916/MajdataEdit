@@ -35,7 +35,6 @@ public partial class MainWindow : Window
         //Console.WriteLine("SelectionChanged");
         SimaiProcessor.ClearNoteListPlayedState();
         ghostCusorPositionTime = (float)time;
-        if (!isPlaying) await DrawWave();
     }
 
     private void FumenContent_TextChanged(object sender, TextChangedEventArgs e)
