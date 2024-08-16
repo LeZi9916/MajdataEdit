@@ -22,8 +22,8 @@ public partial class MainWindow : Window
     {
         var i = LevelSelector.SelectedIndex;
         SetRawFumenText(SimaiProcessor.fumens[i]);
-        selectedDifficulty = i;
-        LevelTextBox.Text = SimaiProcessor.levels[selectedDifficulty];
+        SelectedDifficulty = i;
+        LevelTextBox.Text = SimaiProcessor.levels[SelectedDifficulty];
         SetSavedState(true);
         SimaiProcessor.Serialize(GetRawFumenText());
         SyntaxCheck();
@@ -32,8 +32,8 @@ public partial class MainWindow : Window
     private void LevelTextBox_TextChanged(object sender, TextChangedEventArgs e)
     {
         SetSavedState(false);
-        if (selectedDifficulty == -1) return;
-        SimaiProcessor.levels[selectedDifficulty] = LevelTextBox.Text;
+        if (SelectedDifficulty == -1) return;
+        SimaiProcessor.levels[SelectedDifficulty] = LevelTextBox.Text;
     }
 
     private void OffsetTextBox_TextChanged(object sender, TextChangedEventArgs e)

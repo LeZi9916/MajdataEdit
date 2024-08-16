@@ -507,7 +507,7 @@ public partial class MuriCheck : Window
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
-        SlideAccuracy_TextBox.Text = ((MainWindow)Owner).editorSetting!.DefaultSlideAccuracy.ToString();
+        SlideAccuracy_TextBox.Text = MainWindow.EditorSetting!.DefaultSlideAccuracy.ToString();
     }
 
     private void Window_Initialized(object sender, EventArgs e)

@@ -103,3 +103,15 @@ public enum RenderType
     HW,
     SW
 }
+public enum RequestState
+{
+    OK,
+    TimeOut,
+    Invaild
+}
+public enum EditorState
+{
+    Idle,
+    Playing,
+    Paused
+}

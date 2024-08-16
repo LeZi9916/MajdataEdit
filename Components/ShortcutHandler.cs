@@ -58,11 +58,11 @@ public partial class MainWindow : Window
     {
         if (AudioManager.ChannelIsPlaying(ChannelType.BGM)) 
             return;
-        var speed = GetPlaybackSpeed();
+        var speed = PlaybackSpeed;
         Console.WriteLine(speed);
         speed += 0.25f;
         PlbSpdLabel.Content = speed * 100 + "%";
-        SetPlaybackSpeed(speed);
+        PlaybackSpeed = speed;
         PlbSpdAdjGrid.Visibility = Visibility.Visible;
         playbackSpeedHideTimer.Stop();
         playbackSpeedHideTimer.Start();
@@ -76,12 +76,12 @@ public partial class MainWindow : Window
     {
         if (AudioManager.ChannelIsPlaying(ChannelType.BGM)) 
             return;
-        var speed = GetPlaybackSpeed();
+        var speed = PlaybackSpeed;
         Console.WriteLine(speed);
         speed -= 0.25f;
         if (speed < 1e-6) return; // Interrupt if it's an epsilon or lower.
         PlbSpdLabel.Content = speed * 100 + "%";
-        SetPlaybackSpeed(speed);
+        PlaybackSpeed = speed;
         PlbSpdAdjGrid.Visibility = Visibility.Visible;
         playbackSpeedHideTimer.Stop();
         playbackSpeedHideTimer.Start();

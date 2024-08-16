@@ -9,6 +9,124 @@ using Timer = System.Timers.Timer;
 namespace MajdataEdit;
 public partial class MainWindow : Window
 {
+    async ValueTask Pause()
+    {
+        var rsp = await ViewController.Pause();
+        switch(rsp)
+        {
+            case RequestState.TimeOut:
+                MessageBox.Show(GetLocalizedString("AskRender"), GetLocalizedString("Attention"));
+                return;
+            case RequestState.Invaild:
+                MessageBox.Show("Unknown Error","Error",MessageBoxButton.OK,MessageBoxImage.Error);
+                return;
+        }
+        FumenContent.Focus();
+        PlayAndPauseButton.Content = "▶";
+
+        AudioManager.Pause(ChannelType.BGM);
+        AudioManager.Pause(ChannelType.HoldRiser);
+
+        waveStopMonitorTimer.Stop();
+    }
+    async ValueTask Play()
+    {
+        var CusorTime = SimaiProcessor.Serialize(GetRawFumenText(), GetRawFumenPosition()); //scan first
+        var isOpIncluded = false;
+
+        FumenContent.Focus();
+        await SaveFumen();
+        
+        lastPlayTiming = AudioManager.GetSeconds(ChannelType.BGM);
+        await GenerateSoundEffectList(lastPlayTiming, isOpIncluded);
+        SimaiProcessor.ClearNoteListPlayedState();
+
+        var rsp = await ViewController.Play();
+        switch (rsp)
+        {
+            case RequestState.TimeOut:
+                MessageBox.Show(GetLocalizedString("AskRender"), GetLocalizedString("Attention"));
+                return;
+            case RequestState.Invaild:
+                MessageBox.Show("Unknown Error", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+        }
+        PlayAndPauseButton.Content = "  ▌▌ ";
+        StartSELoop();
+        waveStopMonitorTimer.Start();
+        AudioManager.Play(ChannelType.BGM, false);
+        ghostCusorPositionTime = (float)CusorTime;
+    }
+    async ValueTask Preview()
+    {
+        var startAt = DateTime.Now.AddSeconds(5d);
+        await GenerateSoundEffectList(0.0, true);
+        InternalSwitchWindow(false);
+        
+        AudioManager.SetPosition(ChannelType.BGM, 0);
+        
+        var rsp = await ViewController.Preview();
+        switch (rsp)
+        {
+            case RequestState.TimeOut:
+                MessageBox.Show(GetLocalizedString("AskRender"), GetLocalizedString("Attention"));
+                return;
+            case RequestState.Invaild:
+                MessageBox.Show("Unknown Error", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+        }
+        lastPlayTiming = 0;
+        AudioManager.Play(ChannelType.TrackStart, true);
+        await Task.Delay(startAt - DateTime.Now);
+        SimaiProcessor.ClearNoteListPlayedState();
+        StartSELoop();
+        waveStopMonitorTimer.Start();
+        AudioManager.Play(ChannelType.BGM, false);
+        ghostCusorPositionTime = 0;
+    }
+    async ValueTask Stop()
+    {
+        await Dispatcher.InvokeAsync(FumenContent.Focus);
+        var rsp = await ViewController.Stop();
+        switch (rsp)
+        {
+            case RequestState.TimeOut:
+                MessageBox.Show(GetLocalizedString("AskRender"), GetLocalizedString("Attention"));
+                return;
+            case RequestState.Invaild:
+                MessageBox.Show("Unknown Error", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+        }
+
+        PlayAndPauseButton.Content = "▶";
+        AudioManager.Stop(ChannelType.BGM);
+        AudioManager.Stop(ChannelType.HoldRiser);
+
+        waveStopMonitorTimer.Stop();
+        AudioManager.SetSeconds(ChannelType.BGM, lastPlayTiming);
+    }
+    async ValueTask Continue()
+    {
+        var CusorTime = SimaiProcessor.Serialize(GetRawFumenText(), GetRawFumenPosition()); //scan first
+        lastPlayTiming = AudioManager.GetSeconds(ChannelType.BGM);
+
+        var rsp = await ViewController.Continue();
+        switch (rsp)
+        {
+            case RequestState.TimeOut:
+                MessageBox.Show(GetLocalizedString("AskRender"), GetLocalizedString("Attention"));
+                return;
+            case RequestState.Invaild:
+                MessageBox.Show("Unknown Error", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+        }
+        PlayAndPauseButton.Content = "  ▌▌ ";
+        waveStopMonitorTimer.Start();
+        AudioManager.Play(ChannelType.BGM, false);
+        ghostCusorPositionTime = (float)CusorTime;
+    }
+
+
     private async ValueTask TogglePause()
     {
         isPlaying = false;
@@ -116,21 +234,23 @@ public partial class MainWindow : Window
     private async ValueTask TogglePlayAndPause(PlayMethod playMethod = PlayMethod.Normal)
     {
         SetControlButtonActive(false);
-        if (isPlaying)
+        if (ViewController.IsPlaying)
         {
-            await TogglePause();
+            //await TogglePause();
+            await Pause();
             SetControlButtonActive(true);
         }
         else
         {
-            if (EditorState != EditorControlMethod.Pause &&
-                editorSetting!.SyntaxCheckLevel == 2 &&
-                SyntaxChecker.GetErrorCount() != 0)
-            {
-                ShowErrorWindow();
-                return;
-            }
-            await TogglePlay(playMethod);
+            //if (EditorState != EditorControlMethod.Pause &&
+            //    EditorSetting!.SyntaxCheckLevel == 2 &&
+            //    SyntaxChecker.GetErrorCount() != 0)
+            //{
+            //    ShowErrorWindow();
+            //    return;
+            //}
+            //await TogglePlay(playMethod);
+            await Play();
             SetControlButtonActive(true);
             Op_Button.IsEnabled = false;
         }
@@ -139,7 +259,7 @@ public partial class MainWindow : Window
     private async ValueTask TogglePlayAndStop(PlayMethod playMethod = PlayMethod.Normal)
     {
         SetControlButtonActive(false);
-        if (editorSetting!.SyntaxCheckLevel == 2 && SyntaxChecker.GetErrorCount() != 0)
+        if (EditorSetting!.SyntaxCheckLevel == 2 && SyntaxChecker.GetErrorCount() != 0)
         {
             ShowErrorWindow();
             return;
@@ -212,8 +332,8 @@ public partial class MainWindow : Window
             Control = EditorControlMethod.Continue,
             StartAt = StartAt.Ticks,
             StartTime = (float)AudioManager.GetSeconds(ChannelType.BGM),
-            AudioSpeed = GetPlaybackSpeed(),
-            EditorPlayMethod = editorSetting!.editorPlayMethod
+            AudioSpeed = PlaybackSpeed,
+            EditorPlayMethod = EditorSetting!.editorPlayMethod
         };
         var response = await WebControl.RequestPostAsync("http://localhost:8013/", req);
         if (!response.IsSuccess)
@@ -235,7 +355,7 @@ public partial class MainWindow : Window
     {
         var path = Path.Combine(MaidataDir, "majdata.json");
 
-        await MajsonGenerator.Generate(path, selectedDifficulty);
+        await MajsonGenerator.Generate(path, SelectedDifficulty);
 
         EditorControlMethod control = playMethod switch
         {
@@ -252,13 +372,13 @@ public partial class MainWindow : Window
             JsonPath = path,
             StartAt = StartAt.Ticks,
             StartTime = (float)AudioManager.GetSeconds(ChannelType.BGM),
-            NoteSpeed = editorSetting!.NoteSpeed,
-            TouchSpeed = editorSetting!.TouchSpeed,
-            BackgroundCover = editorSetting!.backgroundCover,
-            ComboStatusType = editorSetting!.comboStatusType,
-            AudioSpeed = GetPlaybackSpeed(),
-            SmoothSlideAnime = editorSetting!.SmoothSlideAnime,
-            EditorPlayMethod = editorSetting.editorPlayMethod
+            NoteSpeed = EditorSetting!.NoteSpeed,
+            TouchSpeed = EditorSetting!.TouchSpeed,
+            BackgroundCover = EditorSetting!.backgroundCover,
+            ComboStatusType = EditorSetting!.comboStatusType,
+            AudioSpeed = PlaybackSpeed,
+            SmoothSlideAnime = EditorSetting!.SmoothSlideAnime,
+            EditorPlayMethod = EditorSetting.editorPlayMethod
         };
 
         var response = await WebControl.RequestPostAsync("http://localhost:8013/", req);
@@ -299,4 +419,226 @@ public partial class MainWindow : Window
     /// </summary>
     /// <returns></returns>
     private string GetViewerWorkingDirectory() => Environment.CurrentDirectory + "/MajdataView_Data/StreamingAssets";
+}
+public static class ViewController
+{
+    public static double LastPlayTiming { get; set; } = 0;
+    public static EditorState State { get; private set; } = EditorState.Idle;
+    public static bool IsPlaying => State == EditorState.Playing;
+    public static bool IsPaused => State == EditorState.Paused;
+    public static bool IsIdle => State == EditorState.Idle;
+
+    static CancellationTokenSource? lastTaskSouce = null;
+
+    public static async ValueTask<RequestState> Pause()
+    {
+        if(!IsPlaying)
+            return RequestState.Invaild;
+
+        AudioManager.Pause(ChannelType.BGM);
+        AudioManager.Pause(ChannelType.HoldRiser);
+
+        if (await RequestToPause())
+        {
+            State = EditorState.Paused;
+            return RequestState.OK;
+        }
+        else
+            return RequestState.TimeOut;
+    }
+    public static async ValueTask<RequestState> Continue()
+    {
+        if (IsPlaying || !IsPaused)
+            return RequestState.Invaild;
+
+        LastPlayTiming = AudioManager.GetSeconds(ChannelType.BGM);
+        var result = await RequestToContinue();
+        AudioManager.Play(ChannelType.BGM, false);
+
+        if (result)
+        {
+            State = EditorState.Playing;
+            return RequestState.OK;
+        }
+        else
+            return RequestState.TimeOut;
+    }
+    public static async ValueTask<RequestState> Play()
+    {
+        if (IsPlaying)
+            return RequestState.Invaild;
+        else if (IsPaused)
+            return await Continue();
+
+        if (await RequestToRun(PlayMethod.Normal))
+        {
+            if(lastTaskSouce is not null && !lastTaskSouce.IsCancellationRequested)
+                lastTaskSouce.Cancel();
+            lastTaskSouce = new();
+            State = EditorState.Playing;
+            FinishedDetector(1000,lastTaskSouce.Token);
+            return RequestState.OK;
+        }
+        else
+            return RequestState.Invaild;
+    }
+    public static async ValueTask<RequestState> Preview()
+    {
+        if (IsPlaying)
+            return RequestState.Invaild;
+        LastPlayTiming = 0;
+        if (await RequestToRun(PlayMethod.Op, DateTime.Now.AddSeconds(5d)))
+        {
+            State = EditorState.Playing;
+            return RequestState.OK;
+        }
+        else
+            return RequestState.Invaild;
+    }
+    public static async ValueTask<RequestState> Record()
+    {
+        if (IsPlaying)
+            return RequestState.Invaild;
+
+        LastPlayTiming = 0;
+        if (await RequestToRun(PlayMethod.Record, DateTime.Now.AddSeconds(5d)))
+        {
+            State = EditorState.Idle;
+            return RequestState.OK;
+        }
+        else
+            return RequestState.Invaild;
+    }
+    public static async ValueTask<RequestState> Stop()
+    {
+        if (!IsPlaying && !IsPaused)
+            return RequestState.Invaild;
+
+        if(await RequestToStop())
+        {
+            if (lastTaskSouce is not null)
+                lastTaskSouce.Cancel();
+            State = EditorState.Idle;
+            return RequestState.OK;
+        }
+        else
+            return RequestState.TimeOut;
+
+    }
+
+    static async void FinishedDetector(int extraTime,CancellationToken token)
+    {
+        await Task.Delay(200);
+        while(true)
+        {
+            if (token.IsCancellationRequested)
+                break;
+            if (IsPaused)
+            {
+                await Task.Delay(100);
+                continue;
+            }
+            else if (IsPlaying)
+            {
+                if (!AudioManager.ChannelIsPlaying(ChannelType.BGM))
+                {
+                    await Task.Delay(extraTime);
+                    await Stop();
+                    break;
+                }
+            }
+            else
+                break;
+            await Task.Delay(100);
+        }
+    }
+
+    //*VIEW COMMUNICATION
+    /// <summary>
+    /// 向View发送Stop请求
+    /// </summary>
+    /// <returns></returns>
+    private static async ValueTask<bool> RequestToStop()
+    {
+        var req = new EditRequest
+        {
+            Control = EditorControlMethod.Stop
+        };
+
+        return (await WebControl.RequestPostAsync("http://localhost:8013/", req)).IsSuccess;
+    }
+    /// <summary>
+    /// 向View发送Pause请求
+    /// </summary>
+    /// <returns></returns>
+    private static async ValueTask<bool> RequestToPause()
+    {
+        var req = new EditRequest
+        {
+            Control = EditorControlMethod.Pause
+        };
+
+        return (await WebControl.RequestPostAsync("http://localhost:8013/", req)).IsSuccess;
+    }
+    /// <summary>
+    /// 向View发送Continue请求
+    /// </summary>
+    /// <param name="StartAt"></param>
+    /// <returns></returns>
+    private static async ValueTask<bool> RequestToContinue()
+    {
+        var setting = MainWindow.EditorSetting;
+
+        var req = new EditRequest
+        {
+            Control = EditorControlMethod.Continue,
+            StartAt = DateTime.Now.Ticks,
+            StartTime = (float)AudioManager.GetSeconds(ChannelType.BGM),
+            AudioSpeed = MainWindow.PlaybackSpeed,
+            EditorPlayMethod = setting!.editorPlayMethod
+        };
+        return (await WebControl.RequestPostAsync("http://localhost:8013/", req)).IsSuccess;
+    }
+    /// <summary>
+    /// 向View发送Play请求
+    /// </summary>
+    /// <param name="StartAt"></param>
+    /// <param name="playMethod"></param>
+    /// <returns></returns>
+    private static async ValueTask<bool> RequestToRun(PlayMethod playMethod,DateTime? startAt = null)
+    {
+        if (startAt is null)
+            startAt = DateTime.Now;
+
+        var path = Path.Combine(MainWindow.MaidataDir, "majdata.json");
+        var setting = MainWindow.EditorSetting;
+
+        await MajsonGenerator.Generate(path, MainWindow.SelectedDifficulty);
+
+        EditorControlMethod control = playMethod switch
+        {
+            PlayMethod.Op => EditorControlMethod.OpStart,
+            PlayMethod.Normal => EditorControlMethod.Start,
+            _ => EditorControlMethod.Record
+        };
+
+        // 将maimaiDX速度换算为View中的单位速度 MajSpeed = 107.25 / (71.4184491 * (MaiSpeed + 0.9975) ^ -0.985558604)
+
+        var req = new EditRequest()
+        {
+            Control = control,
+            JsonPath = path,
+            StartAt = ((DateTime)startAt).Ticks,
+            StartTime = (float)AudioManager.GetSeconds(ChannelType.BGM),
+            NoteSpeed = setting!.NoteSpeed,
+            TouchSpeed = setting!.TouchSpeed,
+            BackgroundCover = setting!.backgroundCover,
+            ComboStatusType = setting!.comboStatusType,
+            AudioSpeed = MainWindow.PlaybackSpeed,
+            SmoothSlideAnime = setting!.SmoothSlideAnime,
+            EditorPlayMethod = setting.editorPlayMethod
+        };
+
+        return (await WebControl.RequestPostAsync("http://localhost:8013/", req)).IsSuccess;
+    }
 }

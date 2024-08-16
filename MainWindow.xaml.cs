@@ -51,14 +51,14 @@ public partial class MainWindow : Window
 
         AudioManager.Init(new WindowInteropHelper(this).Handle);
         await ReadEditorSettingAsync();
-        ChartRefreshDelay = editorSetting.ChartRefreshDelay;
+        ChartRefreshDelay = EditorSetting.ChartRefreshDelay;
         VisualEffectUpdater(16);
         ChartUpdater();
 
         waveStopMonitorTimer.Elapsed += WaveStopMonitorTimer_Elapsed;
         playbackSpeedHideTimer.Elapsed += PlbHideTimer_Elapsed;
 
-        if (editorSetting!.AutoCheckUpdate) 
+        if (EditorSetting!.AutoCheckUpdate) 
         {
             CheckUpdateButton.IsEnabled = false;
             await CheckUpdate(true);

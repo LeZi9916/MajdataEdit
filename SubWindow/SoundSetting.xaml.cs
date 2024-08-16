@@ -120,15 +120,15 @@ public partial class SoundSetting : Window
 
     private void BtnSetDefault_Click(object sender, RoutedEventArgs e)
     {
-        AudioManager.SetVolume(ChannelType.BGM, MainWindow.editorSetting!.Default_BGM_Level);
-        AudioManager.SetVolume(ChannelType.Answer, MainWindow.editorSetting!.Default_Answer_Level);
-        AudioManager.SetVolume(ChannelType.TapJudge, MainWindow.editorSetting!.Default_Judge_Level);
-        AudioManager.SetVolume(ChannelType.Break, MainWindow.editorSetting!.Default_Break_Level);
-        AudioManager.SetVolume(ChannelType.BreakSlideEnd, MainWindow.editorSetting!.Default_Break_Slide_Level);
-        AudioManager.SetVolume(ChannelType.BreakSlideStart, MainWindow.editorSetting!.Default_Slide_Level);
-        AudioManager.SetVolume(ChannelType.ExJudge, MainWindow.editorSetting!.Default_Ex_Level);
-        AudioManager.SetVolume(ChannelType.Touch, MainWindow.editorSetting!.Default_Touch_Level);
-        AudioManager.SetVolume(ChannelType.Hanabi, MainWindow.editorSetting!.Default_Hanabi_Level);
+        AudioManager.SetVolume(ChannelType.BGM, MainWindow.EditorSetting!.Default_BGM_Level);
+        AudioManager.SetVolume(ChannelType.Answer, MainWindow.EditorSetting!.Default_Answer_Level);
+        AudioManager.SetVolume(ChannelType.TapJudge, MainWindow.EditorSetting!.Default_Judge_Level);
+        AudioManager.SetVolume(ChannelType.Break, MainWindow.EditorSetting!.Default_Break_Level);
+        AudioManager.SetVolume(ChannelType.BreakSlideEnd, MainWindow.EditorSetting!.Default_Break_Slide_Level);
+        AudioManager.SetVolume(ChannelType.BreakSlideStart, MainWindow.EditorSetting!.Default_Slide_Level);
+        AudioManager.SetVolume(ChannelType.ExJudge, MainWindow.EditorSetting!.Default_Ex_Level);
+        AudioManager.SetVolume(ChannelType.Touch, MainWindow.EditorSetting!.Default_Touch_Level);
+        AudioManager.SetVolume(ChannelType.Hanabi, MainWindow.EditorSetting!.Default_Hanabi_Level);
 
         MainWindow.SaveEditorSetting();
         MessageBox.Show(MainWindow.GetLocalizedString("SetVolumeDefaultSuccess"));
@@ -136,14 +136,14 @@ public partial class SoundSetting : Window
 
     private void BtnSetToDefault_Click(object sender, RoutedEventArgs e)
     {
-        BGM_Slider.Value = MainWindow.editorSetting!.Default_BGM_Level;
-        Answer_Slider.Value = MainWindow.editorSetting!.Default_Answer_Level;
-        Judge_Slider.Value = MainWindow.editorSetting!.Default_Judge_Level;
-        Break_Slider.Value = MainWindow.editorSetting!.Default_Break_Level;
-        BreakSlide_Slider.Value = MainWindow.editorSetting!.Default_Break_Slide_Level;
-        Slide_Slider.Value = MainWindow.editorSetting!.Default_Slide_Level;
-        EX_Slider.Value = MainWindow.editorSetting!.Default_Ex_Level;
-        Touch_Slider.Value = MainWindow.editorSetting!.Default_Touch_Level;
-        Hanabi_Slider.Value = MainWindow.editorSetting!.Default_Hanabi_Level;
+        BGM_Slider.Value = MainWindow.EditorSetting!.Default_BGM_Level;
+        Answer_Slider.Value = MainWindow.EditorSetting!.Default_Answer_Level;
+        Judge_Slider.Value = MainWindow.EditorSetting!.Default_Judge_Level;
+        Break_Slider.Value = MainWindow.EditorSetting!.Default_Break_Level;
+        BreakSlide_Slider.Value = MainWindow.EditorSetting!.Default_Break_Slide_Level;
+        Slide_Slider.Value = MainWindow.EditorSetting!.Default_Slide_Level;
+        EX_Slider.Value = MainWindow.EditorSetting!.Default_Ex_Level;
+        Touch_Slider.Value = MainWindow.EditorSetting!.Default_Touch_Level;
+        Hanabi_Slider.Value = MainWindow.EditorSetting!.Default_Hanabi_Level;
     }
 }

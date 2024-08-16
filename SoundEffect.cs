@@ -38,11 +38,12 @@ public partial class MainWindow
         {
             timeBeginPeriod(1);
             var lasttime = AudioManager.GetSeconds(ChannelType.BGM);
-            while (isPlaying)
+            while (!ViewController.IsIdle)
             {
                 //sw.Reset();
                 //sw.Start();
-                SoundEffectUpdate();
+                if(ViewController.IsPlaying)
+                    SoundEffectUpdate();
                 Thread.Sleep(1);
                 //sw.Stop();
                 //if(sw.Elapsed.TotalMilliseconds>1.5)

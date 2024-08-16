@@ -29,9 +29,8 @@ public partial class EditorSettingPanel : Window
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
-        var window = (MainWindow)Owner;
 
-        var curLang = window.editorSetting!.Language;
+        var curLang = MainWindow.EditorSetting!.Language;
         var boxIndex = -1;
         for (var i = 0; i < langList.Length; i++)
             if (curLang == langList[i])
@@ -46,29 +45,29 @@ public partial class EditorSettingPanel : Window
 
         LanguageComboBox.SelectedIndex = boxIndex;
 
-        RenderModeComboBox.SelectedIndex = (int)window.editorSetting.RenderMode;
+        RenderModeComboBox.SelectedIndex = (int)MainWindow.EditorSetting.RenderMode;
 
-        ViewerCover.Text = window.editorSetting.backgroundCover.ToString();
-        ViewerSpeed.Text = window.editorSetting.NoteSpeed.ToString("F1"); // 转化为形如"7.0", "9.5"这样的速度
-        ViewerTouchSpeed.Text = window.editorSetting.TouchSpeed.ToString("F1");
+        ViewerCover.Text = MainWindow.EditorSetting.backgroundCover.ToString();
+        ViewerSpeed.Text = MainWindow.EditorSetting.NoteSpeed.ToString("F1"); // 转化为形如"7.0", "9.5"这样的速度
+        ViewerTouchSpeed.Text = MainWindow.EditorSetting.TouchSpeed.ToString("F1");
         ComboDisplay.SelectedIndex = Array.IndexOf(
-            Enum.GetValues(window.editorSetting.comboStatusType.GetType()),
-            window.editorSetting.comboStatusType
+            Enum.GetValues(MainWindow.EditorSetting.comboStatusType.GetType()),
+            MainWindow.EditorSetting.comboStatusType
         );
         if (ComboDisplay.SelectedIndex < 0)
             ComboDisplay.SelectedIndex = 0;
 
         PlayMethod.SelectedIndex = Array.IndexOf(
-            Enum.GetValues(window.editorSetting.editorPlayMethod.GetType()),
-            window.editorSetting.editorPlayMethod
+            Enum.GetValues(MainWindow.EditorSetting.editorPlayMethod.GetType()),
+            MainWindow.EditorSetting.editorPlayMethod
         );
         if(PlayMethod.SelectedIndex < 0) 
             PlayMethod.SelectedIndex = 0;
 
-        ChartRefreshDelay.Text = window.editorSetting.ChartRefreshDelay.ToString();
-        AutoUpdate.IsChecked = window.editorSetting.AutoCheckUpdate;
-        SmoothSlideAnime.IsChecked = window.editorSetting.SmoothSlideAnime;
-        SyntaxCheckLevel.SelectedIndex = window.editorSetting.SyntaxCheckLevel;
+        ChartRefreshDelay.Text = MainWindow.EditorSetting.ChartRefreshDelay.ToString();
+        AutoUpdate.IsChecked = MainWindow.EditorSetting.AutoCheckUpdate;
+        SmoothSlideAnime.IsChecked = MainWindow.EditorSetting.SmoothSlideAnime;
+        SyntaxCheckLevel.SelectedIndex = MainWindow.EditorSetting.SyntaxCheckLevel;
     }
 
     private void LanguageComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -107,26 +106,26 @@ public partial class EditorSettingPanel : Window
     private void Save_Button_Click(object sender, RoutedEventArgs e)
     {
         var window = (MainWindow)Owner;
-        window.editorSetting!.Language = langList[LanguageComboBox.SelectedIndex];
-        window.editorSetting!.RenderMode = (RenderType)RenderModeComboBox.SelectedIndex;
-        window.editorSetting!.backgroundCover = float.Parse(ViewerCover.Text);
-        window.editorSetting!.NoteSpeed = float.Parse(ViewerSpeed.Text);
-        window.editorSetting!.TouchSpeed = float.Parse(ViewerTouchSpeed.Text);
-        window.editorSetting!.ChartRefreshDelay = int.Parse(ChartRefreshDelay.Text);
-        window.editorSetting!.AutoCheckUpdate = (bool) AutoUpdate.IsChecked!;
-        window.editorSetting!.SmoothSlideAnime = (bool) SmoothSlideAnime.IsChecked!;
-        window.editorSetting!.editorPlayMethod = (EditorPlayMethod)PlayMethod.SelectedIndex;
-        window.editorSetting!.SyntaxCheckLevel = SyntaxCheckLevel.SelectedIndex;
-        // window.editorSetting.isComboEnabled = (bool) ComboDisplay.IsChecked!;
-        window.editorSetting!.comboStatusType = (EditorComboIndicator)Enum.GetValues(
-            window.editorSetting!.comboStatusType.GetType()
+        MainWindow.EditorSetting!.Language = langList[LanguageComboBox.SelectedIndex];
+        MainWindow.EditorSetting!.RenderMode = (RenderType)RenderModeComboBox.SelectedIndex;
+        MainWindow.EditorSetting!.backgroundCover = float.Parse(ViewerCover.Text);
+        MainWindow.EditorSetting!.NoteSpeed = float.Parse(ViewerSpeed.Text);
+        MainWindow.EditorSetting!.TouchSpeed = float.Parse(ViewerTouchSpeed.Text);
+        MainWindow.EditorSetting!.ChartRefreshDelay = int.Parse(ChartRefreshDelay.Text);
+        MainWindow.EditorSetting!.AutoCheckUpdate = (bool) AutoUpdate.IsChecked!;
+        MainWindow.EditorSetting!.SmoothSlideAnime = (bool) SmoothSlideAnime.IsChecked!;
+        MainWindow.EditorSetting!.editorPlayMethod = (EditorPlayMethod)PlayMethod.SelectedIndex;
+        MainWindow.EditorSetting!.SyntaxCheckLevel = SyntaxCheckLevel.SelectedIndex;
+        // MainWindow.editorSetting.isComboEnabled = (bool) ComboDisplay.IsChecked!;
+        MainWindow.EditorSetting!.comboStatusType = (EditorComboIndicator)Enum.GetValues(
+            MainWindow.EditorSetting!.comboStatusType.GetType()
         ).GetValue(ComboDisplay.SelectedIndex)!;
         window.SaveEditorSetting();
 
-        window.ViewerCover.Content = window.editorSetting.backgroundCover.ToString();
-        window.ViewerSpeed.Content = window.editorSetting.NoteSpeed.ToString("F1"); // 转化为形如"7.0", "9.5"这样的速度
-        window.ViewerTouchSpeed.Content = window.editorSetting.TouchSpeed.ToString("F1");
-        window.ChartRefreshDelay = window.editorSetting.ChartRefreshDelay;
+        window.ViewerCover.Content = MainWindow.EditorSetting.backgroundCover.ToString();
+        window.ViewerSpeed.Content = MainWindow.EditorSetting.NoteSpeed.ToString("F1"); // 转化为形如"7.0", "9.5"这样的速度
+        window.ViewerTouchSpeed.Content = MainWindow.EditorSetting.TouchSpeed.ToString("F1");
+        window.ChartRefreshDelay = MainWindow.EditorSetting.ChartRefreshDelay;
 
 
         saveFlag = true;
@@ -153,7 +152,7 @@ public partial class EditorSettingPanel : Window
             }
             else
             {
-                LocalizeDictionary.Instance.Culture = new CultureInfo(((MainWindow)Owner).editorSetting!.Language);
+                LocalizeDictionary.Instance.Culture = new CultureInfo(MainWindow.EditorSetting!.Language);
             }
         }
         else

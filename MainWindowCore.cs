@@ -40,6 +40,20 @@ public partial class MainWindow : Window
     public static readonly SemVersion MAJDATA_VERSION = SemVersion.Parse(MAJDATA_VERSION_STRING, SemVersionStyles.Any);
     public int ChartRefreshDelay { get; set; } = 100;
     public static string MaidataDir { get; private set; } = "";
+    public static float PlaybackSpeed 
+    {
+        get
+        {
+            var speed = 0f;
+            AudioManager.GetPlaybackSpeed(ChannelType.BGM, ref speed);
+            return speed / 100f + 1f;
+        }
+        private set
+        {
+            var scale = (value - 1) * 100f;
+            AudioManager.SetPlaybackSpeed(ChannelType.BGM, scale);
+        }
+    }
 
     //float[] wavedBs;
     readonly short[][] waveRaws = new short[3][];
@@ -47,7 +61,7 @@ public partial class MainWindow : Window
     DiscordRpcClient DCRPCclient = new("1068882546932326481");
 
     float deltatime = 4f;
-    public EditorSetting editorSetting = new();
+    public static EditorSetting EditorSetting { get; private set; } = new();
 
     bool fumenOverwriteMode; //谱面文本覆盖模式
     float ghostCusorPositionTime;
@@ -61,7 +75,7 @@ public partial class MainWindow : Window
 
     double lastMousePointX; //Used for drag scroll
 
-    int selectedDifficulty = -1;
+    public static int SelectedDifficulty { get; private set; } = -1;
     double songLength;
 
     SoundSetting soundSetting = new();
@@ -241,7 +255,7 @@ public partial class MainWindow : Window
     {
         if (soundSetting != null) 
             soundSetting.Close();
-        if (editorSetting == null) 
+        if (EditorSetting == null) 
             await ReadEditorSettingAsync();
 
         var useOgg = File.Exists(path + "/track.ogg");
@@ -285,7 +299,7 @@ public partial class MainWindow : Window
 
         LevelSelector.SelectedItem = LevelSelector.Items[0];
         await ReadSettingAsync();
-        SetRawFumenText(SimaiProcessor.fumens[selectedDifficulty]);
+        SetRawFumenText(SimaiProcessor.fumens[SelectedDifficulty]);
         SeekTextFromTime();
         SimaiProcessor.Serialize(GetRawFumenText());
         FumenContent.Focus();
@@ -305,7 +319,7 @@ public partial class MainWindow : Window
 
     internal async void SyntaxCheck()
     {
-        if (editorSetting!.SyntaxCheckLevel == 0)
+        if (EditorSetting!.SyntaxCheckLevel == 0)
         {
             SetErrCount(GetLocalizedString("SyntaxCheckLevel1"));
             return;
@@ -362,11 +376,15 @@ public partial class MainWindow : Window
         if (result == MessageBoxResult.Cancel) return false;
         return true;
     }
-
+    /// <summary>
+    /// 保存谱面到maidata.bak.txt，如果<paramref name="writeToDisk"/>为 ture ，则保存到maidata.txt
+    /// </summary>
+    /// <param name="writeToDisk"></param>
+    /// <returns></returns>
     private async Task SaveFumen(bool writeToDisk = false)
     {
-        if (selectedDifficulty == -1) return;
-        SimaiProcessor.fumens[selectedDifficulty] = GetRawFumenText();
+        if (SelectedDifficulty == -1) return;
+        SimaiProcessor.fumens[SelectedDifficulty] = GetRawFumenText();
         SimaiProcessor.first = float.Parse(OffsetTextBox.Text);
         if (MaidataDir == "")
         {
@@ -395,7 +413,7 @@ public partial class MainWindow : Window
         var path = Path.Combine(MaidataDir, majSettingFilename);
         var setting = new MajSetting
         {
-            LastEditDiff = selectedDifficulty,
+            LastEditDiff = SelectedDifficulty,
             LastEditTime = AudioManager.GetSeconds(ChannelType.BGM)
         };
         AudioManager.SaveSetting(setting);
@@ -413,7 +431,7 @@ public partial class MainWindow : Window
         {
             var setting = await JsonSerializer.DeserializeAsync<MajSetting>(stream);
             LevelSelector.SelectedIndex = setting!.LastEditDiff;
-            selectedDifficulty = setting.LastEditDiff;
+            SelectedDifficulty = setting.LastEditDiff;
             await SetBgmPosition(setting.LastEditTime);
 
             AudioManager.ReadSetting(setting);
@@ -436,13 +454,13 @@ public partial class MainWindow : Window
 
     private async ValueTask CreateEditorSettingAsync()
     {
-        editorSetting = new EditorSetting
+        EditorSetting = new EditorSetting
         {
             RenderMode =
             RenderOptions.ProcessRenderMode == RenderMode.SoftwareOnly ? RenderType.SW : RenderType.HW // 使用命令行指定强制软件渲染时，同步修改配置值
         };
         using (var stream = File.Create(editorSettingFilename))
-            await Serializer.Json.SerializeAsync(stream, editorSetting);
+            await Serializer.Json.SerializeAsync(stream, EditorSetting);
 
         var esp = new EditorSettingPanel(true)
         {
@@ -456,34 +474,34 @@ public partial class MainWindow : Window
         if (!File.Exists(editorSettingFilename)) 
             await CreateEditorSettingAsync();
         using (var stream = File.OpenRead(editorSettingFilename))
-            editorSetting = (await Serializer.Json.DeserializeAsync<EditorSetting>(stream))!;
+            EditorSetting = (await Serializer.Json.DeserializeAsync<EditorSetting>(stream))!;
 
         if (RenderOptions.ProcessRenderMode != RenderMode.SoftwareOnly)
             //如果没有通过命令行预先指定渲染模式，则使用设置项的渲染模式
             RenderOptions.ProcessRenderMode =
-                editorSetting.RenderMode == 0 ? RenderMode.Default : RenderMode.SoftwareOnly;
+                EditorSetting.RenderMode == 0 ? RenderMode.Default : RenderMode.SoftwareOnly;
         else
             //如果通过命令行指定了使用软件渲染模式，则覆盖设置项
-            editorSetting.RenderMode = RenderType.SW;
+            EditorSetting.RenderMode = RenderType.SW;
 
-        LocalizeDictionary.Instance.Culture = new CultureInfo(editorSetting.Language);
-        AddGesture(editorSetting.PlayPauseKey, "PlayAndPause");
-        AddGesture(editorSetting.PlayStopKey, "StopPlaying");
-        AddGesture(editorSetting.SaveKey, "SaveFile");
-        AddGesture(editorSetting.SendViewerKey, "SendToView");
-        AddGesture(editorSetting.IncreasePlaybackSpeedKey, "IncreasePlaybackSpeed");
-        AddGesture(editorSetting.DecreasePlaybackSpeedKey, "DecreasePlaybackSpeed");
+        LocalizeDictionary.Instance.Culture = new CultureInfo(EditorSetting.Language);
+        AddGesture(EditorSetting.PlayPauseKey, "PlayAndPause");
+        AddGesture(EditorSetting.PlayStopKey, "StopPlaying");
+        AddGesture(EditorSetting.SaveKey, "SaveFile");
+        AddGesture(EditorSetting.SendViewerKey, "SendToView");
+        AddGesture(EditorSetting.IncreasePlaybackSpeedKey, "IncreasePlaybackSpeed");
+        AddGesture(EditorSetting.DecreasePlaybackSpeedKey, "DecreasePlaybackSpeed");
         AddGesture("Ctrl+f", "Find");
-        AddGesture(editorSetting.MirrorLeftRightKey, "MirrorLR");
-        AddGesture(editorSetting.MirrorUpDownKey, "MirrorUD");
-        AddGesture(editorSetting.Mirror180Key, "Mirror180");
-        AddGesture(editorSetting.Mirror45Key, "Mirror45");
-        AddGesture(editorSetting.MirrorCcw45Key, "MirrorCcw45");
-        FumenContent.FontSize = editorSetting.FontSize;
+        AddGesture(EditorSetting.MirrorLeftRightKey, "MirrorLR");
+        AddGesture(EditorSetting.MirrorUpDownKey, "MirrorUD");
+        AddGesture(EditorSetting.Mirror180Key, "Mirror180");
+        AddGesture(EditorSetting.Mirror45Key, "Mirror45");
+        AddGesture(EditorSetting.MirrorCcw45Key, "MirrorCcw45");
+        FumenContent.FontSize = EditorSetting.FontSize;
 
-        ViewerCover.Content = editorSetting.backgroundCover.ToString();
-        ViewerSpeed.Content = editorSetting.NoteSpeed.ToString("F1"); // 转化为形如"7.0", "9.5"这样的速度
-        ViewerTouchSpeed.Content = editorSetting.TouchSpeed.ToString("F1");
+        ViewerCover.Content = EditorSetting.backgroundCover.ToString();
+        ViewerSpeed.Content = EditorSetting.NoteSpeed.ToString("F1"); // 转化为形如"7.0", "9.5"这样的速度
+        ViewerTouchSpeed.Content = EditorSetting.TouchSpeed.ToString("F1");
 
         await SaveEditorSetting(); // 覆盖旧版本setting
     }
@@ -491,7 +509,7 @@ public partial class MainWindow : Window
     public async Task SaveEditorSetting()
     {
         using (var stream = File.Create(editorSettingFilename))
-            await Serializer.Json.SerializeAsync(stream,editorSetting);
+            await Serializer.Json.SerializeAsync(stream,EditorSetting);
     }
 
     private void AddGesture(string keyGusture, string command)
@@ -846,6 +864,7 @@ public partial class MainWindow : Window
                 }
             }
 
+            // the red cusor
             if (lastPlayTiming - currentTime <= deltatime)
             {
                 //Draw play Start time
@@ -855,6 +874,7 @@ public partial class MainWindow : Window
                 graphics.DrawPolygon(pen, tranglePoints);
             }
 
+            // the orange cusor
             if (ghostCusorPositionTime - currentTime <= deltatime)
             {
                 //Draw ghost cusor
@@ -911,19 +931,6 @@ public partial class MainWindow : Window
         if (addSpaceAfter) localizedString += " ";
 
         return localizedString ?? key;
-    }
-
-    private void SetPlaybackSpeed(float speed)
-    {
-        var scale = (speed - 1) * 100f;
-        AudioManager.SetPlaybackSpeed(ChannelType.BGM, scale);
-    }
-
-    private float GetPlaybackSpeed()
-    {
-        var speed = 0f;
-        AudioManager.GetPlaybackSpeed(ChannelType.BGM, ref speed);
-        return speed / 100f + 1f;
     }
 
     private async Task SetBgmPosition(double time)
