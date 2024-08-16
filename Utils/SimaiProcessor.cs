@@ -285,7 +285,7 @@ internal static class SimaiProcessor
             return 0;
         }
     }
-
+    public static async Task<double> SerializeAsync(string text, long position = 0) => await Task.Run(() => Serialize(text, position));
     public static void ClearNoteListPlayedState()
     {
         notelist.Sort((x, y) => x.time.CompareTo(y.time));

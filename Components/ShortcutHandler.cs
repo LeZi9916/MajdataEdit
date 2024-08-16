@@ -4,12 +4,14 @@ using System.Media;
 using System.Timers;
 using System.Windows;
 using System.Windows.Input;
-using Un4seen.Bass;
 using Timer = System.Timers.Timer;
 
 namespace MajdataEdit;
 public partial class MainWindow : Window
 {
+    private readonly Timer playbackSpeedHideTimer = new(1000);
+
+
     void SetControlButtonActive(bool isEnable)
     {
         Dispatcher.Invoke(() =>
@@ -21,15 +23,15 @@ public partial class MainWindow : Window
     }
     private async void PlayAndPause_CanExecute(object? sender, CanExecuteRoutedEventArgs e) //快捷键
     {
-        SetControlButtonActive(false);
+        if (!PlayAndPauseButton.IsEnabled)
+            return;
         await TogglePlayAndStop();
-        SetControlButtonActive(true);
     }
     private async void StopPlaying_CanExecute(object? sender, CanExecuteRoutedEventArgs e) //快捷键
     {
-        SetControlButtonActive(false);
+        if (!PlayAndPauseButton.IsEnabled)
+            return;
         await TogglePlayAndPause();
-        SetControlButtonActive(true);
     }
     private async void SaveFile_Command_CanExecute(object? sender, CanExecuteRoutedEventArgs e)
     {
@@ -43,9 +45,9 @@ public partial class MainWindow : Window
     /// <param name="e"></param>
     private async void SendToView_CanExecute(object? sender, CanExecuteRoutedEventArgs e)
     {
-        SetControlButtonActive(false);
+        if (!Op_Button.IsEnabled)
+            return;
         await TogglePlayAndStop(PlayMethod.Op);
-        SetControlButtonActive(true);
     }
     /// <summary>
     /// 加快播放速度
@@ -84,9 +86,6 @@ public partial class MainWindow : Window
         playbackSpeedHideTimer.Stop();
         playbackSpeedHideTimer.Start();
     }
-
-    private readonly Timer playbackSpeedHideTimer = new(1000);
-
     private void PlbHideTimer_Elapsed(object? sender, ElapsedEventArgs e)
     {
         Dispatcher.Invoke(() => { PlbSpdAdjGrid.Visibility = Visibility.Collapsed; });

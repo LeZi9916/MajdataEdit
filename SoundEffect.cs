@@ -15,7 +15,7 @@ public partial class MainWindow
     double extraTime4AllPerfect; // 需要在播放完后等待All Perfect特效的秒数
     bool isPlan2Stop;            // 已准备停止 当all perfect无法在播放完BGM前结束时需要此功能
     bool isPlaying;              // 为了解决播放到结束时自动停止
-    double playStartTime;
+    double lastPlayTiming = 0;        // 上次播放的Timing
 
     private List<SoundEffectTiming>? waitToBePlayed { get; set; }
     //private Stopwatch sw = new Stopwatch();

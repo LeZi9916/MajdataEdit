@@ -46,18 +46,15 @@ public partial class MainWindow : Window
         DCRPCclient.Logger = new ConsoleLogger { Level = LogLevel.Warning };
         DCRPCclient.Initialize();
 
-        var handle = new WindowInteropHelper(this).Handle;
-        Bass.BASS_Init(-1, 44100, BASSInit.BASS_DEVICE_CPSPEAKERS, handle);
+        
         InitWave();
 
-        AudioManager.Init();
+        AudioManager.Init(new WindowInteropHelper(this).Handle);
         await ReadEditorSettingAsync();
+        ChartRefreshDelay = editorSetting.ChartRefreshDelay;
+        VisualEffectUpdater(16);
+        ChartUpdater();
 
-        chartChangeTimer.Elapsed += ChartChangeTimer_Elapsed;
-        chartChangeTimer.AutoReset = false;
-        currentTimeRefreshTimer.Elapsed += CurrentTimeRefreshTimer_Elapsed;
-        currentTimeRefreshTimer.Start();
-        visualEffectRefreshTimer.Elapsed += VisualEffectRefreshTimer_Elapsed;
         waveStopMonitorTimer.Elapsed += WaveStopMonitorTimer_Elapsed;
         playbackSpeedHideTimer.Elapsed += PlbHideTimer_Elapsed;
 
@@ -127,9 +124,6 @@ public partial class MainWindow : Window
                 process[0].Kill();
         }
 
-        currentTimeRefreshTimer.Stop();
-        visualEffectRefreshTimer.Stop();
-
         soundSetting.Close();
         //if (bpmtap != null) { bpmtap.Close(); }
         //if (muriCheck != null) { muriCheck.Close(); }
@@ -171,114 +165,6 @@ public partial class MainWindow : Window
         FumenContent.Focus();
     }
 
-    #region RichTextbox events
-
-    private async void FumenContent_SelectionChanged(object sender, RoutedEventArgs e)
-    {
-        NoteNowText.Content = "" + (
-            new TextRange(FumenContent.Document.ContentStart, FumenContent.CaretPosition).Text.Replace("\r", "")
-                .Count(o => o == '\n') + 1) + " 行";
-        if (AudioManager.ChannelIsPlaying(ChannelType.BGM) && (bool)FollowPlayCheck.IsChecked!)
-            return;
-        //TODO:这个应该换成用fumen text position来在已经serialized的timinglist里面找。。 然后直接去掉这个double的返回和position的入参。。。
-        var time = SimaiProcessor.Serialize(GetRawFumenText(), GetRawFumenPosition());
-
-        //按住Ctrl，同时按下鼠标左键/上下左右方向键时，才改变进度，其他包含Ctrl的组合键不影响进度。
-        if (Keyboard.Modifiers == ModifierKeys.Control && (
-                Mouse.LeftButton == MouseButtonState.Pressed ||
-                Keyboard.IsKeyDown(Key.Left) ||
-                Keyboard.IsKeyDown(Key.Right) ||
-                Keyboard.IsKeyDown(Key.Up) ||
-                Keyboard.IsKeyDown(Key.Down)
-            ))
-        {
-            if (AudioManager.ChannelIsPlaying(ChannelType.BGM))
-                await TogglePause();
-            await SetBgmPosition(time);
-        }
-
-        //Console.WriteLine("SelectionChanged");
-        SimaiProcessor.ClearNoteListPlayedState();
-        ghostCusorPositionTime = (float)time;
-        if (!isPlaying) await DrawWave();
-    }
-
-    private async void FumenContent_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (GetRawFumenText() == "" || isLoading) return;
-        SetSavedState(false);
-        if (chartChangeTimer.Interval < 33)
-        {
-            SimaiProcessor.Serialize(GetRawFumenText(), GetRawFumenPosition());
-            await DrawWave();
-        }
-        else
-        {
-            chartChangeTimer.Stop();
-            chartChangeTimer.Start();
-        }
-    }
-
-    private void FumenContent_OnPreviewKeyDown(object sender, KeyEventArgs e)
-    {
-        // 按下Insert键，同时未按下任何组合键，切换覆盖模式
-        if (e.Key == Key.Insert && Keyboard.Modifiers == ModifierKeys.None)
-        {
-            SwitchFumenOverwriteMode();
-            e.Handled = true;
-        }
-    }
-
-    #endregion
-
-    #region Wave displayer
-
-    private async void WaveViewZoomIn_Click(object sender, RoutedEventArgs e)
-    {
-        if (deltatime > 1)
-            deltatime -= 1;
-        await DrawWave();
-        FumenContent.Focus();
-    }
-
-    private async void WaveViewZoomOut_Click(object sender, RoutedEventArgs e)
-    {
-        if (deltatime < 10)
-            deltatime += 1;
-        await DrawWave();
-        FumenContent.Focus();
-    }
-
-    private async void MusicWave_MouseWheel(object sender, MouseWheelEventArgs e)
-    {
-        await ScrollWave(-e.Delta);
-    }
-
-    private void MusicWave_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        lastMousePointX = e.GetPosition(this).X;
-    }
-
-    private async void MusicWave_MouseMove(object sender, MouseEventArgs e)
-    {
-        if (e.LeftButton == MouseButtonState.Pressed)
-        {
-            var delta = e.GetPosition(this).X - lastMousePointX;
-            lastMousePointX = e.GetPosition(this).X;
-            await ScrollWave(-delta);
-        }
-
-        lastMousePointX = e.GetPosition(this).X;
-    }
-
-    private async void MusicWave_SizeChanged(object sender, SizeChangedEventArgs e)
-    {
-        InitWave();
-        await DrawWave();
-    }
-
-
-    #endregion
 
     
 }

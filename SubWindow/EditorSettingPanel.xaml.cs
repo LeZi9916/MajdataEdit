@@ -126,7 +126,7 @@ public partial class EditorSettingPanel : Window
         window.ViewerCover.Content = window.editorSetting.backgroundCover.ToString();
         window.ViewerSpeed.Content = window.editorSetting.NoteSpeed.ToString("F1"); // 转化为形如"7.0", "9.5"这样的速度
         window.ViewerTouchSpeed.Content = window.editorSetting.TouchSpeed.ToString("F1");
-        window.chartChangeTimer.Interval = window.editorSetting.ChartRefreshDelay;
+        window.ChartRefreshDelay = window.editorSetting.ChartRefreshDelay;
 
 
         saveFlag = true;

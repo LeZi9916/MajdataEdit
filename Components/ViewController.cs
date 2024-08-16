@@ -11,7 +11,6 @@ public partial class MainWindow : Window
 {
     private async ValueTask TogglePause()
     {
-        Op_Button.IsEnabled = true;
         isPlaying = false;
         isPlan2Stop = false;
 
@@ -22,22 +21,18 @@ public partial class MainWindow : Window
         AudioManager.Pause(ChannelType.HoldRiser);
 
         waveStopMonitorTimer.Stop();
-        visualEffectRefreshTimer.Stop();
         await RequestToPause();
-        await DrawWave();
     }
     private async ValueTask TogglePlay(PlayMethod playMethod = PlayMethod.Normal)
     {
-        //if (!Op_Button.IsEnabled) return;
-
         if (EditorState == EditorControlMethod.Start || playMethod != PlayMethod.Normal)
             if (!await RequestToStop())
                 return;
 
         FumenContent.Focus();
         await SaveFumen();
-        if (CheckAndStartView()) return;
-        Op_Button.IsEnabled = false;
+        if (CheckAndStartView()) 
+            return;
         isPlaying = true;
         isPlan2Stop = false;
         PlayAndPauseButton.Content = "  ▌▌ ";
@@ -75,23 +70,20 @@ public partial class MainWindow : Window
                 await Task.Delay(startAt - DateTime.Now);
                 Dispatcher.Invoke(() =>
                 {
-                    playStartTime = AudioManager.GetSeconds(ChannelType.BGM);
+                    lastPlayTiming = AudioManager.GetSeconds(ChannelType.BGM);
                     SimaiProcessor.ClearNoteListPlayedState();
                     StartSELoop();
 
                     waveStopMonitorTimer.Start();
-                    visualEffectRefreshTimer.Start();
                     AudioManager.Play(ChannelType.BGM, false);
                 });
                 break;
             case PlayMethod.Normal:
-                playStartTime = AudioManager.GetSeconds(ChannelType.BGM);
-                await GenerateSoundEffectList(playStartTime, isOpIncluded);
+                lastPlayTiming = AudioManager.GetSeconds(ChannelType.BGM);
+                await GenerateSoundEffectList(lastPlayTiming, isOpIncluded);
                 SimaiProcessor.ClearNoteListPlayedState();
                 StartSELoop();
-                //soundEffectTimer.Start();
                 waveStopMonitorTimer.Start();
-                visualEffectRefreshTimer.Start();
                 startAt = DateTime.Now;
                 AudioManager.Play(ChannelType.BGM, false);
                 if (EditorState == EditorControlMethod.Pause)
@@ -106,29 +98,29 @@ public partial class MainWindow : Window
         }
 
         ghostCusorPositionTime = (float)CusorTime;
-        await DrawWave();
     }
     private async ValueTask ToggleStop()
     {
-        Op_Button.IsEnabled = true;
         isPlaying = false;
         isPlan2Stop = false;
 
-        FumenContent.Focus();
+        await Dispatcher.InvokeAsync(FumenContent.Focus);
         PlayAndPauseButton.Content = "▶";
         AudioManager.Stop(ChannelType.BGM);
         AudioManager.Stop(ChannelType.HoldRiser);
 
         waveStopMonitorTimer.Stop();
-        visualEffectRefreshTimer.Stop();
         await RequestToStop();
-        AudioManager.SetSeconds(ChannelType.BGM, playStartTime);
-        await DrawWave();
+        AudioManager.SetSeconds(ChannelType.BGM, lastPlayTiming);
     }
     private async ValueTask TogglePlayAndPause(PlayMethod playMethod = PlayMethod.Normal)
     {
+        SetControlButtonActive(false);
         if (isPlaying)
+        {
             await TogglePause();
+            SetControlButtonActive(true);
+        }
         else
         {
             if (EditorState != EditorControlMethod.Pause &&
@@ -139,20 +131,30 @@ public partial class MainWindow : Window
                 return;
             }
             await TogglePlay(playMethod);
+            SetControlButtonActive(true);
+            Op_Button.IsEnabled = false;
         }
 
     }
     private async ValueTask TogglePlayAndStop(PlayMethod playMethod = PlayMethod.Normal)
     {
+        SetControlButtonActive(false);
         if (editorSetting!.SyntaxCheckLevel == 2 && SyntaxChecker.GetErrorCount() != 0)
         {
             ShowErrorWindow();
             return;
         }
         if (isPlaying)
+        {
             await ToggleStop();
+            SetControlButtonActive(true);
+        }
         else
+        {
             await TogglePlay(playMethod);
+            SetControlButtonActive(true);
+            Op_Button.IsEnabled = false;
+        }
     }
 
 
@@ -232,7 +234,6 @@ public partial class MainWindow : Window
     private async ValueTask<bool> RequestToRun(DateTime StartAt, PlayMethod playMethod)
     {
         var path = Path.Combine(MaidataDir, "majdata.json");
-        float startTime = 0;
 
         await MajsonGenerator.Generate(path, selectedDifficulty);
 
@@ -243,19 +244,14 @@ public partial class MainWindow : Window
             _ => EditorControlMethod.Record
         };
 
-        Dispatcher.Invoke(() =>
-        {
-            startTime = (float)AudioManager.GetSeconds(ChannelType.BGM);
-            // request.playSpeed = float.Parse(ViewerSpeed.Text);
-            // 将maimaiDX速度换算为View中的单位速度 MajSpeed = 107.25 / (71.4184491 * (MaiSpeed + 0.9975) ^ -0.985558604)
-        });
+        // 将maimaiDX速度换算为View中的单位速度 MajSpeed = 107.25 / (71.4184491 * (MaiSpeed + 0.9975) ^ -0.985558604)
 
         var req = new EditRequest()
         {
             Control = control,
             JsonPath = path,
             StartAt = StartAt.Ticks,
-            StartTime = startTime,
+            StartTime = (float)AudioManager.GetSeconds(ChannelType.BGM),
             NoteSpeed = editorSetting!.NoteSpeed,
             TouchSpeed = editorSetting!.TouchSpeed,
             BackgroundCover = editorSetting!.backgroundCover,

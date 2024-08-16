@@ -13,19 +13,10 @@ namespace MajdataEdit;
 public partial class MainWindow : Window
 {
     #region Left
-    private async void PlayAndPauseButton_Click(object sender, RoutedEventArgs e)
-    {
-        SetControlButtonActive(false);
-        await TogglePlayAndPause();
-        SetControlButtonActive(true);
-    }
+    private async void PlayAndPauseButton_Click(object sender, RoutedEventArgs e) => await TogglePlayAndPause();
 
-    private async void StopButton_Click(object sender, RoutedEventArgs e)
-    {
-        SetControlButtonActive(false);
-        await ToggleStop();
-        SetControlButtonActive(true);
-    }
+    private async void StopButton_Click(object sender, RoutedEventArgs e) => await ToggleStop();
+    private async void Op_Button_Click(object sender, RoutedEventArgs e) => await TogglePlayAndStop(PlayMethod.Op);
 
     private async void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -71,13 +62,6 @@ public partial class MainWindow : Window
     private void FollowPlayCheck_Click(object sender, RoutedEventArgs e)
     {
         FumenContent.Focus();
-    }
-
-    private async void Op_Button_Click(object sender, RoutedEventArgs e)
-    {
-        SetControlButtonActive(false);
-        await TogglePlayAndStop(PlayMethod.Op);
-        SetControlButtonActive(true);
     }
 
     private void SettingLabel_MouseUp(object sender, MouseButtonEventArgs e)
@@ -133,12 +117,7 @@ public partial class MainWindow : Window
     {
     }
 
-    private async void Menu_ExportRender_Click(object sender, RoutedEventArgs e)
-    {
-        SetControlButtonActive(false);
-        await TogglePlayAndPause(PlayMethod.Record);
-        SetControlButtonActive(true);
-    }
+    private async void Menu_ExportRender_Click(object sender, RoutedEventArgs e) => await TogglePlayAndPause(PlayMethod.Record);
 
     private void MirrorLeftRight_MenuItem_Click(object? sender, RoutedEventArgs e)
     {

@@ -1,4 +1,5 @@
 ﻿using MajdataEdit.Types;
+using System.Windows.Interop;
 using Un4seen.Bass;
 using Un4seen.Bass.AddOn.Fx;
 using Path = System.IO.Path;
@@ -32,8 +33,10 @@ public static class AudioManager
     #endregion
     public static string SFX_PATH => Path.Combine(Environment.CurrentDirectory,"SFX");
 
-    public static void Init()
+    public static void Init(in nint handle)
     {
+        Bass.BASS_Init(-1, 44100, BASSInit.BASS_DEVICE_CPSPEAKERS, handle);
+
         answerStream = Bass.BASS_StreamCreateFile(Path.Combine(SFX_PATH, "answer.wav"), 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
         judgeStream = Bass.BASS_StreamCreateFile(Path.Combine(SFX_PATH, "judge.wav"), 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
         judgeBreakStream = Bass.BASS_StreamCreateFile(Path.Combine(SFX_PATH, "judge_break.wav"), 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);

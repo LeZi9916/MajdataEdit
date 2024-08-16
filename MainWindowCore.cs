@@ -47,18 +47,16 @@ public partial class MainWindow : Window
     const string editorSettingFilename = "EditorSetting.json";
     public static readonly string MAJDATA_VERSION_STRING = $"v{Assembly.GetExecutingAssembly().GetName().Version!.ToString(3)}";
     public static readonly SemVersion MAJDATA_VERSION = SemVersion.Parse(MAJDATA_VERSION_STRING, SemVersionStyles.Any);
-
+    public int ChartRefreshDelay { get; set; } = 100;
     public static string MaidataDir { get; private set; } = "";
 
     //float[] wavedBs;
     readonly short[][] waveRaws = new short[3][];
-    public Timer chartChangeTimer = new(1000); // 谱面变更延迟解析]\
-    readonly Timer currentTimeRefreshTimer = new(100);
 
     DiscordRpcClient DCRPCclient = new("1068882546932326481");
 
     float deltatime = 4f;
-    public EditorSetting? editorSetting;
+    public EditorSetting editorSetting = new();
 
     bool fumenOverwriteMode; //谱面文本覆盖模式
     float ghostCusorPositionTime;
@@ -77,10 +75,6 @@ public partial class MainWindow : Window
 
     SoundSetting soundSetting = new();
     bool UpdateCheckLock;
-
-
-    //*UI DRAWING
-    readonly Timer visualEffectRefreshTimer = new(16.6667);
 
     WriteableBitmap? WaveBitmap;
 
@@ -497,12 +491,12 @@ public partial class MainWindow : Window
         esp.ShowDialog();
     }
 
-    private async ValueTask ReadEditorSettingAsync()
+    private async Task ReadEditorSettingAsync()
     {
         if (!File.Exists(editorSettingFilename)) 
             await CreateEditorSettingAsync();
-        var json = File.ReadAllText(editorSettingFilename);
-        editorSetting = JsonConvert.DeserializeObject<EditorSetting>(json)!;
+        using (var stream = File.OpenRead(editorSettingFilename))
+            editorSetting = (await Serializer.Json.DeserializeAsync<EditorSetting>(stream))!;
 
         if (RenderOptions.ProcessRenderMode != RenderMode.SoftwareOnly)
             //如果没有通过命令行预先指定渲染模式，则使用设置项的渲染模式
@@ -531,14 +525,13 @@ public partial class MainWindow : Window
         ViewerSpeed.Content = editorSetting.NoteSpeed.ToString("F1"); // 转化为形如"7.0", "9.5"这样的速度
         ViewerTouchSpeed.Content = editorSetting.TouchSpeed.ToString("F1");
 
-        chartChangeTimer.Interval = editorSetting.ChartRefreshDelay; // 设置更新延迟
-
-        SaveEditorSetting(); // 覆盖旧版本setting
+        await SaveEditorSetting(); // 覆盖旧版本setting
     }
 
-    public void SaveEditorSetting()
+    public async Task SaveEditorSetting()
     {
-        File.WriteAllText(editorSettingFilename, JsonConvert.SerializeObject(editorSetting, Formatting.Indented));
+        using (var stream = File.Create(editorSettingFilename))
+            await Serializer.Json.SerializeAsync(stream,editorSetting);
     }
 
     private void AddGesture(string keyGusture, string command)
@@ -549,31 +542,41 @@ public partial class MainWindow : Window
     }
 
     // This update very freqently to Draw FFT wave.
-    private async void VisualEffectRefreshTimer_Elapsed(object? sender, ElapsedEventArgs e)
+    async void VisualEffectUpdater(int interval)
     {
         try
         {
-            await DrawFFT();
-            await DrawWave();
+            while(true)
+            {
+                await UpdateTimeDisplay();
+                await DrawFFT();
+                await DrawWave();
+                await Task.Delay(interval);
+            }
         }
-        catch (Exception ex)
+        catch(Exception e)
         {
-            Console.WriteLine(ex.ToString());
+            Console.WriteLine(e);
         }
     }
-
-    // 谱面变更延迟解析
-    private async void ChartChangeTimer_Elapsed(object? sender, ElapsedEventArgs e)
+    /// <summary>
+    /// 谱面变更延迟解析
+    /// </summary>
+    async void ChartUpdater()
     {
-        Console.WriteLine("TextChanged");
-        SyntaxCheck();
-        await Dispatcher.InvokeAsync(async () => 
+        while(true)
         {
-            SimaiProcessor.Serialize(GetRawFumenText(), GetRawFumenPosition());
-            await DrawWave();
-        });
+            var text = GetRawFumenText();
+            var pos = GetRawFumenPosition();
+            await SimaiProcessor.SerializeAsync(text, pos);
+            await Task.Delay(ChartRefreshDelay);
+        }
     }
 
+    /// <summary>
+    /// 绘制位于富文本控件右侧的快速傅里叶变换波形
+    /// </summary>
+    /// <returns></returns>
     private async ValueTask DrawFFT()
     {
         await Dispatcher.InvokeAsync(() =>
@@ -625,11 +628,16 @@ public partial class MainWindow : Window
         WaveBitmap = new WriteableBitmap(width, height, 72, 72, PixelFormats.Pbgra32, null);
         MusicWave.Source = WaveBitmap;
     }
-
+    /// <summary>
+    /// 绘制下方的卷轴
+    /// </summary>
+    /// <returns></returns>
     private async ValueTask DrawWave()
     {
-        if (isDrawing) return;
-        if (WaveBitmap == null) return;
+        if (isDrawing) 
+            return;
+        if (WaveBitmap == null) 
+            return;
 
         await Dispatcher.InvokeAsync(() =>
         {
@@ -878,11 +886,11 @@ public partial class MainWindow : Window
                 }
             }
 
-            if (playStartTime - currentTime <= deltatime)
+            if (lastPlayTiming - currentTime <= deltatime)
             {
                 //Draw play Start time
                 pen = new Pen(Color.Red, 5);
-                var x1 = (float)(playStartTime / step - startindex) * linewidth;
+                var x1 = (float)(lastPlayTiming / step - startindex) * linewidth;
                 PointF[] tranglePoints = { new(x1 - 2, 0), new(x1 + 2, 0), new(x1, 3.46f) };
                 graphics.DrawPolygon(pen, tranglePoints);
             }
@@ -906,19 +914,16 @@ public partial class MainWindow : Window
             isDrawing = false;
         });
     }
-
-    // This update less frequently. set the time text.
-    private void CurrentTimeRefreshTimer_Elapsed(object? sender, ElapsedEventArgs e)
-    {
-        UpdateTimeDisplay();
-    }
-
-    private void UpdateTimeDisplay()
+    /// <summary>
+    /// 更新左上角TimeDisplay
+    /// </summary>
+    /// <returns></returns>
+    private async ValueTask UpdateTimeDisplay()
     {
         var currentPlayTime = AudioManager.GetSeconds(ChannelType.BGM);
         var minute = (int)currentPlayTime / 60;
         double second = (int)(currentPlayTime - 60 * minute);
-        Dispatcher.Invoke(() => { TimeLabel.Content = string.Format("{0}:{1:00}", minute, second); });
+        await Dispatcher.InvokeAsync(() => { TimeLabel.Content = string.Format("{0}:{1:00}", minute, second); });
     }
 
     private async Task ScrollWave(double delta)
