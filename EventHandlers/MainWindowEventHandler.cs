@@ -70,6 +70,10 @@ public partial class MainWindow : Window
                 return;
         }
     }
+    void OnLevelSelctorChanged(object? sender, RoutedEventArgs e)
+    {
+
+    }
     private void OnMenuMajnetClick(object? sender, RoutedEventArgs e)
     {
         Process.Start(new ProcessStartInfo() { FileName = "https://majdata.net", UseShellExecute = true });
