@@ -22,7 +22,6 @@
 			<ColumnDefinition Width="358*"/>
 			<ColumnDefinition Width="360*" />
 		</Grid.ColumnDefinitions>
-
 		<Menu Height="19" VerticalAlignment="Top" Background="{DynamicResource ButtonsBackground}"
               Foreground="{DynamicResource ButtonForeground}" Grid.ColumnSpan="3" Grid.RowSpan="2">
 			<MenuItem x:Name="MenuFiles" Header="Files" Foreground="{DynamicResource ButtonForeground}">
