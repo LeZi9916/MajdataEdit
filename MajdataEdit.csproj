@@ -48,4 +48,10 @@
       <Resource Include="Image\outline_find_replace_white_24dp.png" />
       <Resource Include="Image\outline_search_white_24dp.png" />
     </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Modules\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="Modules\MajSimai\MajSimaiDecode\MajSimaiDecode.csproj" />
+  </ItemGroup>
 </Project>

@@ -2,6 +2,9 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using MajdataEdit.Types;
+using MajdataEdit.Utils;
+using MsBox.Avalonia.Dto;
+using MsBox.Avalonia.Models;
 using Semver;
 using System;
 using System.Collections.Generic;
@@ -102,6 +105,35 @@ public partial class MainWindow : Window
                 MenuCheckUpdate.Header = "CheckUpdate";
                 MenuCheckUpdate.IsEnabled = true;
             });
+        }
+    }
+    async Task UpdateNotify(string url)
+    {
+        var boxParams = new MessageBoxCustomParams
+        {
+            ButtonDefinitions =
+            [
+                new ButtonDefinition { Name = "Yes", },
+                new ButtonDefinition { Name = "No", },
+            ],
+            ContentTitle = "Update available",
+            ContentMessage = "New version had resleased",
+            Icon = MsBox.Avalonia.Enums.Icon.Question,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            CanResize = false,
+            MaxWidth = 500,
+            MaxHeight = 800,
+            SizeToContent = SizeToContent.WidthAndHeight,
+            ShowInCenter = true,
+            Topmost = true,
+        };
+        switch (await MessageBox.ShowAsync(boxParams))
+        {
+            case "Yes":
+                Platform.OpenUrl(url);
+                break;
+            default:
+                return;
         }
     }
 }

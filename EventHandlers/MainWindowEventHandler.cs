@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 namespace MajdataEdit;
 public partial class MainWindow : Window
 {
+    BPMTap? _bpmTapForm = null;
     async void OnWindowLoaded(object? sender, RoutedEventArgs e)
     {
         var result = await CheckUpdate();
@@ -41,35 +42,6 @@ public partial class MainWindow : Window
         var url = result.DownloadUrl ?? "https://github.com/LingFeng-bbben/MajdataView/releases";
         await UpdateNotify(url);
     }
-    async Task UpdateNotify(string url)
-    {
-        var boxParams = new MessageBoxCustomParams
-        {
-            ButtonDefinitions = new List<ButtonDefinition>
-                {
-                    new ButtonDefinition { Name = "Yes", },
-                    new ButtonDefinition { Name = "No", },
-                },
-            ContentTitle = "Update available",
-            ContentMessage = "New version had resleased",
-            Icon = MsBox.Avalonia.Enums.Icon.Question,
-            WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            CanResize = false,
-            MaxWidth = 500,
-            MaxHeight = 800,
-            SizeToContent = SizeToContent.WidthAndHeight,
-            ShowInCenter = true,
-            Topmost = true,
-        };
-        switch (await MessageBox.ShowAsync(boxParams))
-        {
-            case "Yes":
-                Platform.OpenUrl(url);
-                break;
-            default:
-                return;
-        }
-    }
     void OnLevelSelctorChanged(object? sender, RoutedEventArgs e)
     {
 
@@ -84,7 +56,10 @@ public partial class MainWindow : Window
     }
     void OnMenuBPMTapClick(object? sender, RoutedEventArgs e)
     {
-        var form = new BPMTap();
-        form.Show(this);
+        if (_bpmTapForm is not null)
+            return;
+        _bpmTapForm = new BPMTap();
+        _bpmTapForm.Closed += (_, _) => _bpmTapForm = null;
+        _bpmTapForm.Show(this);
     }
 }
