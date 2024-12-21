@@ -66,7 +66,8 @@
 					  Click="OnMenuMajnetClick"/>
 			<MenuItem Header="Github" Foreground="{DynamicResource ButtonForeground}"
 					  Click="OnMenuGithubClick"/>
-			<MenuItem x:Name="MenuCheckUpdate" Header="CheckUpdate" Foreground="{DynamicResource ButtonForeground}"/>
+			<MenuItem x:Name="MenuCheckUpdate" Header="CheckUpdate" Foreground="{DynamicResource ButtonForeground}"
+					  Click="OnMenuCheckUpdateClick"/>
 		</Menu>
 	</Grid>
 </Window>

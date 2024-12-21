@@ -4,10 +4,9 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace MajdataEdit.Utils;
-public static class Platform
+public static partial class Platform
 {
     public static void OpenUrl(string url)
     {

@@ -23,16 +23,23 @@ public partial class MainWindow : Window
         else if (result.LatestVersion is null || result.LatestVersion.ToVersion() <= MajEnvironment.Version)
             return;
         var url = result.DownloadUrl ?? "https://github.com/LingFeng-bbben/MajdataView/releases";
-        UpdateNotify(url);
+        await UpdateNotify(url);
     }
     async void OnMenuCheckUpdateClick(object? sender, RoutedEventArgs e)
     {
         var result = await CheckUpdate();
 
-        if (!result.IsSuccess)
+        if (!result.IsSuccess || result.IsBusy)
             return;
-        else if (result.LatestVersion is null || result.LatestVersion.ToVersion() <= MajEnvironment.Version)
+        else if (result.LatestVersion is null)
             return;
+        else if (result.LatestVersion.ToVersion() <= MajEnvironment.Version)
+        {
+            await MessageBox.ShowAsync("Check update", "No updates available", MsBox.Avalonia.Enums.ButtonEnum.Ok, MsBox.Avalonia.Enums.Icon.Info);
+            return;
+        }
+        var url = result.DownloadUrl ?? "https://github.com/LingFeng-bbben/MajdataView/releases";
+        await UpdateNotify(url);
     }
     async Task UpdateNotify(string url)
     {
@@ -54,8 +61,7 @@ public partial class MainWindow : Window
             ShowInCenter = true,
             Topmost = true,
         };
-        var box = MessageBoxManager.GetMessageBoxCustom(boxParams);
-        switch (await box.ShowAsync())
+        switch (await MessageBox.ShowAsync(boxParams))
         {
             case "Yes":
                 Platform.OpenUrl(url);
