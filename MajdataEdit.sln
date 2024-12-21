@@ -5,7 +5,7 @@ VisualStudioVersion = 17.12.35514.174
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MajdataEdit", "MajdataEdit.csproj", "{A1740663-D756-4B83-B409-D6876BAFC518}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MajSimaiDecode", "Modules\MajSimai\MajSimaiDecode\MajSimaiDecode.csproj", "{8D6B5E94-5E2C-4217-8092-ECCBA587316A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MajSimaiParser", "Modules\MajSimai\MajSimaiParser\MajSimaiParser.csproj", "{0C4D09A4-3894-4D03-966E-4CF6536E2759}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,10 @@ Global
 		{A1740663-D756-4B83-B409-D6876BAFC518}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A1740663-D756-4B83-B409-D6876BAFC518}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A1740663-D756-4B83-B409-D6876BAFC518}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8D6B5E94-5E2C-4217-8092-ECCBA587316A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8D6B5E94-5E2C-4217-8092-ECCBA587316A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8D6B5E94-5E2C-4217-8092-ECCBA587316A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8D6B5E94-5E2C-4217-8092-ECCBA587316A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0C4D09A4-3894-4D03-966E-4CF6536E2759}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C4D09A4-3894-4D03-966E-4CF6536E2759}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C4D09A4-3894-4D03-966E-4CF6536E2759}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C4D09A4-3894-4D03-966E-4CF6536E2759}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
