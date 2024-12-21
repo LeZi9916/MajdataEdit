@@ -1,0 +1,3 @@
+[submodule "Modules/MajSimai"]
+	path = Modules/MajSimai
+	url = https://github.com/LingFeng-bbben/MajSimai
