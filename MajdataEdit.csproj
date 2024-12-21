@@ -57,4 +57,7 @@
   <ItemGroup>
     <ProjectReference Include="Modules\MajSimai\MajSimaiDecode\MajSimaiDecode.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Modules\" />
+  </ItemGroup>
 </Project>
