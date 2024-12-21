@@ -82,4 +82,9 @@ public partial class MainWindow : Window
     {
         Process.Start(new ProcessStartInfo() { FileName = "https://github.com/LingFeng-bbben/MajdataView", UseShellExecute = true });
     }
+    void OnMenuBPMTapClick(object? sender, RoutedEventArgs e)
+    {
+        var form = new BPMTap();
+        form.Show(this);
+    }
 }

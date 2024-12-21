@@ -22,6 +22,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         _httpClient.Timeout = TimeSpan.FromSeconds(5);
+        Cover.IsVisible = true;
     }
     async ValueTask<CheckUpdateResult> CheckUpdate()
     {

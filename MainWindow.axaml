@@ -56,7 +56,7 @@
 				<MenuItem Header="RemapViewer"/>
 			</MenuItem>
 			<MenuItem x:Name="MenuTools" Header="Tools" Foreground="{DynamicResource ButtonForeground}">
-				<MenuItem Header="BPMtap"/>
+				<MenuItem Header="BPMtap" Click="OnMenuBPMTapClick"/>
 				<MenuItem x:Name="MenuMuriCheck" Header="MapMuriDetc"
                           IsEnabled="False" />
 				<MenuItem x:Name="SyntaxCheckButton" Header="SyntaxDisplay"
@@ -201,5 +201,9 @@
 				 ScrollViewer.VerticalScrollBarVisibility="Visible"
                  Grid.ColumnSpan="2" Grid.Row="1" Grid.Column="1">
 		</TextBox>
+		<Rectangle x:Name="Cover" Fill="#FF1F1F1F" Margin="0,18,0,0" 
+				   Stroke="Black"
+				   IsVisible="False"
+				   Grid.ColumnSpan="3" Grid.RowSpan="2" Grid.Row="1" />
 	</Grid>
 </Window>
