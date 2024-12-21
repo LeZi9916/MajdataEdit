@@ -13,6 +13,12 @@
     <Copyright>Copyright © 2021</Copyright>
     <ApplicationIcon>favicon.ico</ApplicationIcon>
   </PropertyGroup>
+  <ItemGroup>
+    <AvaloniaXaml Remove="Modules\MajSimai\**" />
+    <Compile Remove="Modules\MajSimai\**" />
+    <EmbeddedResource Remove="Modules\MajSimai\**" />
+    <None Remove="Modules\MajSimai\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.2.1" />
@@ -48,9 +54,6 @@
       <Resource Include="Image\outline_find_replace_white_24dp.png" />
       <Resource Include="Image\outline_search_white_24dp.png" />
     </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Modules\" />
-  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="Modules\MajSimai\MajSimaiDecode\MajSimaiDecode.csproj" />
   </ItemGroup>

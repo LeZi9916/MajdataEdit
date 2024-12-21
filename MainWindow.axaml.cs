@@ -1,16 +1,20 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using MajdataEdit.Types;
 using MajdataEdit.Utils;
+using MajSimaiDecode;
 using MsBox.Avalonia.Dto;
 using MsBox.Avalonia.Models;
 using Semver;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Net.Http;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,7 +22,7 @@ using System.Threading.Tasks;
 namespace MajdataEdit;
 public partial class MainWindow : Window
 {
-
+    public SimaiProcess Chart { get; private set; } = new SimaiProcess("");
     readonly Lock _checkUpdateLock = new();
     readonly HttpClient _httpClient = new();
     public MainWindow()
@@ -135,5 +139,14 @@ public partial class MainWindow : Window
             default:
                 return;
         }
+    }
+    async Task ReadChartFromFile<T>(T file) where T: IStorageFile
+    {
+        using var fileStream = await file.OpenReadAsync();
+        using var memoryBuffer = new MemoryStream();
+        await fileStream.CopyToAsync(memoryBuffer);
+        var chartStr = Encoding.UTF8.GetString(memoryBuffer.ToArray());
+        var chart = new SimaiProcess(chartStr);
+        
     }
 }

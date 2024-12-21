@@ -1,5 +1,6 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using MajdataEdit.Utils;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Dto;
@@ -16,6 +17,28 @@ namespace MajdataEdit;
 public partial class MainWindow : Window
 {
     BPMTap? _bpmTapForm = null;
+    readonly FilePickerOpenOptions _chartFilePickerOption = new()
+    {
+        AllowMultiple = false,
+        FileTypeFilter = 
+        [
+            new("Simai chart file")
+            {
+                Patterns = ["maidata.txt"] 
+            }
+        ]
+    };
+    readonly FilePickerOpenOptions _audioTrackPickerOption = new()
+    {
+        AllowMultiple = false,
+        FileTypeFilter =
+        [
+            new("Track")
+            {
+                Patterns = ["track.mp3", "track.ogg"]
+            }
+        ]
+    };
     async void OnWindowLoaded(object? sender, RoutedEventArgs e)
     {
         var result = await CheckUpdate();
@@ -25,6 +48,10 @@ public partial class MainWindow : Window
             return;
         var url = result.DownloadUrl ?? "https://github.com/LingFeng-bbben/MajdataView/releases";
         await UpdateNotify(url);
+    }
+    void OnLevelSelctorChanged(object? sender, RoutedEventArgs e)
+    {
+
     }
     async void OnMenuCheckUpdateClick(object? sender, RoutedEventArgs e)
     {
@@ -42,17 +69,22 @@ public partial class MainWindow : Window
         var url = result.DownloadUrl ?? "https://github.com/LingFeng-bbben/MajdataView/releases";
         await UpdateNotify(url);
     }
-    void OnLevelSelctorChanged(object? sender, RoutedEventArgs e)
-    {
-
-    }
-    private void OnMenuMajnetClick(object? sender, RoutedEventArgs e)
+    void OnMenuMajnetClick(object? sender, RoutedEventArgs e)
     {
         Process.Start(new ProcessStartInfo() { FileName = "https://majdata.net", UseShellExecute = true });
     }
-    private void OnMenuGithubClick(object? sender, RoutedEventArgs e)
+    void OnMenuGithubClick(object? sender, RoutedEventArgs e)
     {
         Process.Start(new ProcessStartInfo() { FileName = "https://github.com/LingFeng-bbben/MajdataView", UseShellExecute = true });
+    }
+    async void OnMenuOpenClick(object? sender, RoutedEventArgs e)
+    {
+        var files = await StorageProvider.OpenFilePickerAsync(_chartFilePickerOption);
+        await ReadChartFromFile(files[0]);
+    }
+    async void OnMenuNewClick(object? sender, RoutedEventArgs e)
+    {
+        await StorageProvider.OpenFilePickerAsync(_audioTrackPickerOption);
     }
     void OnMenuBPMTapClick(object? sender, RoutedEventArgs e)
     {

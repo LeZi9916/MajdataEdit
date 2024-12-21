@@ -26,8 +26,10 @@
 		<Menu Height="19" VerticalAlignment="Top" Background="{DynamicResource ButtonsBackground}"
               Foreground="{DynamicResource ButtonForeground}" Grid.ColumnSpan="3" Grid.RowSpan="2">
 			<MenuItem x:Name="MenuFiles" Header="Files" Foreground="{DynamicResource ButtonForeground}">
-				<MenuItem x:Name="Menu_New" Header="New" />
-				<MenuItem x:Name="Menu_Open" Header="Open"  />
+				<MenuItem x:Name="Menu_New" Header="New"
+						  Click="OnMenuNewClick"/>
+				<MenuItem x:Name="Menu_Open" Header="Open"
+						  Click="OnMenuOpenClick"/>
 				<MenuItem x:Name="Menu_Save" Header="Save"  />
 				<MenuItem x:Name="Menu_SaveAs" Header="SaveAs" IsEnabled="False"/>
 				<Separator />
