@@ -1,47 +1,49 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-    <PropertyGroup>
-        <OutputType>WinExe</OutputType>
-        <TargetFramework>net6.0-windows</TargetFramework>
-        <Nullable>enable</Nullable>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <UseWPF>true</UseWPF>
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <AssemblyVersion>4.5.0</AssemblyVersion>
+    <FileVersion>4.5.0</FileVersion>
+    <Authors>bbben</Authors>
+    <PackageProjectUrl>https://github.com/LingFeng-bbben/MajdataEdit</PackageProjectUrl>
+    <Copyright>Copyright © 2021</Copyright>
+    <ApplicationIcon>favicon.ico</ApplicationIcon>
+  </PropertyGroup>
 
-        <Version>4.4.0</Version>
-        <Company></Company>
-        <Authors>bbben</Authors>
-        <PackageProjectUrl>https://github.com/LingFeng-bbben/MajdataEdit</PackageProjectUrl>
-        <Copyright>Copyright © 2021</Copyright>
-        <ApplicationIcon>favicon.ico</ApplicationIcon>
-        <UseApplicationTrust>false</UseApplicationTrust>
-        <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    </PropertyGroup>
-    <ItemGroup>
-      <None Remove="Image\bg_dummy.jpg" />
-      <None Remove="Image\outline_find_replace_white_24dp.png" />
-      <None Remove="Image\outline_search_white_24dp.png" />
-    </ItemGroup>
-    <ItemGroup>
-        <PackageReference Include="DiscordRichPresence" Version="1.2.1.24" />
-    </ItemGroup>
-    <ItemGroup>
-        <ContentWithTargetPath Include="bass.dll">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <TargetPath>bass.dll</TargetPath>
-        </ContentWithTargetPath>
-        <ContentWithTargetPath Include="bass_fx.dll">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <TargetPath>bass_fx.dll</TargetPath>
-        </ContentWithTargetPath>
-        <ContentWithTargetPath Include="slide_time.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <TargetPath>slide_time.json</TargetPath>
-        </ContentWithTargetPath>
-                <ContentWithTargetPath Include="LICENSE">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <TargetPath>LICENSE_MajdataEdit</TargetPath>
-        </ContentWithTargetPath>
-    </ItemGroup>
-    <ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.2.1" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.2.1" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.1" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.1" />
+    <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.2.1">
+      <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+      <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="DiscordRichPresence" Version="1.2.1.24" />
+    <PackageReference Include="MessageBox.Avalonia" Version="3.2.0" />
+    <PackageReference Include="Semver" Version="3.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Langs\Langs.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Langs.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Langs\Langs.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Langs.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
       <Resource Include="Image\bg_dummy.jpg" />
       <Resource Include="Image\outline_find_replace_white_24dp.png" />
       <Resource Include="Image\outline_search_white_24dp.png" />

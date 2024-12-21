@@ -1,0 +1,72 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        x:Class="MajdataEdit.MainWindow"
+		Title="MajdataEdit" Height="589" Width="720" MinHeight="589" MinWidth="720"
+		Loaded="OnWindowLoaded">
+	<Grid Margin="0">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="0*"/>
+			<RowDefinition Height="501*"/>
+			<RowDefinition Height="*"/>
+		</Grid.RowDefinitions>
+		<Grid.Background>
+			<LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%" >
+				<GradientStop Color="#FF526675" Offset="0" />
+				<GradientStop Color="#FF735573" Offset="1" />
+			</LinearGradientBrush>
+		</Grid.Background>
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="3*" />
+			<ColumnDefinition Width="358*"/>
+			<ColumnDefinition Width="360*" />
+		</Grid.ColumnDefinitions>
+
+		<Menu Height="19" VerticalAlignment="Top" Background="{DynamicResource ButtonsBackground}"
+              Foreground="{DynamicResource ButtonForeground}" Grid.ColumnSpan="3" Grid.RowSpan="2">
+			<MenuItem x:Name="MenuFiles" Header="Files" Foreground="{DynamicResource ButtonForeground}">
+				<MenuItem x:Name="Menu_New" Header="New" />
+				<MenuItem x:Name="Menu_Open" Header="Open"  />
+				<MenuItem x:Name="Menu_Save" Header="Save"  />
+				<MenuItem x:Name="Menu_SaveAs" Header="SaveAs" IsEnabled="False"/>
+				<Separator />
+				<MenuItem x:Name="Menu_AutosaveRecover" Header="AutosaveRecoverWindowTitle"/>
+				<Separator />
+				<MenuItem x:Name="Menu_ExportRender" Header="ExportVideo"
+                          IsEnabled="False" />
+
+			</MenuItem>
+			<MenuItem x:Name="MenuEdit" Header="Edit" IsEnabled="False"
+                      Foreground="{DynamicResource ButtonForeground}">
+				<MenuItem Header="MirrorLR"/>
+				<MenuItem Header="MirrorUD"/>
+				<MenuItem Header="Mirror180"/>
+				<MenuItem Header="Mirror45"/>
+				<MenuItem Header="MirrorCcw45"/>
+				<Separator />
+				<MenuItem Header="MapInfo"/>
+				<Separator />
+				<MenuItem Header="FindAndReplace"/>
+			</MenuItem>
+			<MenuItem x:Name="MenuSetting" Header="Setting" Foreground="{DynamicResource ButtonForeground}">
+				<MenuItem x:Name="VolumnSetting" Header="Volume" IsEnabled="False" />
+				<Separator />
+				<MenuItem Header="EditorSetting"/>
+				<MenuItem Header="RemapViewer"/>
+			</MenuItem>
+			<MenuItem x:Name="MenuTools" Header="Tools" Foreground="{DynamicResource ButtonForeground}">
+				<MenuItem Header="BPMtap"/>
+				<MenuItem x:Name="MenuMuriCheck" Header="MapMuriDetc"
+                          IsEnabled="False" />
+				<MenuItem x:Name="SyntaxCheckButton" Header="SyntaxDisplay"
+                          IsEnabled="False" />
+			</MenuItem>
+			<MenuItem Header="Majnet" Foreground="{DynamicResource ButtonForeground}"
+					  Click="OnMenuMajnetClick"/>
+			<MenuItem Header="Github" Foreground="{DynamicResource ButtonForeground}"
+					  Click="OnMenuGithubClick"/>
+			<MenuItem x:Name="MenuCheckUpdate" Header="CheckUpdate" Foreground="{DynamicResource ButtonForeground}"/>
+		</Menu>
+	</Grid>
+</Window>
