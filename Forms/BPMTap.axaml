@@ -2,9 +2,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="160.975" d:DesignHeight="184.314"
+        mc:Ignorable="d" d:DesignWidth="178.975" d:DesignHeight="184.314"
 		Height="184.314"
-		Width="160.975"
+		Width="178.975"
         x:Class="MajdataEdit.BPMTap"
         Title="BPMTap"
 		SystemDecorations="Full"
@@ -12,7 +12,7 @@
 		CanResize="False">
 
 	<Grid Background="{DynamicResource WindowBackground}">
-		<Button x:Name="TapBtn" Content="Tap" Height="130" Width="120.975" Margin="19,10,19,0"
+		<Button x:Name="TapBtn" Content="Tap" Height="130" Width="138.975" Margin="19,10,19,0"
                 VerticalAlignment="Top"
 				VerticalContentAlignment="Center" 
 			    HorizontalContentAlignment="Center" 
@@ -21,7 +21,7 @@
                 Foreground="{DynamicResource ButtonForeground}" 
 				ClickMode="Press"
 				Click="OnTapBtnClick"/>
-		<Button x:Name="ResetBtn" Content="Reset" Height="32" Width="120.975" Margin="19,145,19,0"
+		<Button x:Name="ResetBtn" Content="Reset" Height="32" Width="138.975" Margin="19,145,19,0"
                 VerticalAlignment="Top"
 				VerticalContentAlignment="Center" 
 			    HorizontalContentAlignment="Center" 
